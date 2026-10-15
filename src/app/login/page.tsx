@@ -41,8 +41,9 @@ export default function LoginPage() {
     }
   };
 
-  const handleQuickSelect = (staffEmail: string) => {
+  const handleQuickSelect = (staffEmail: string, staffPass: string) => {
     setEmail(staffEmail);
+    setPassword(staffPass);
     setErrorMessage(null);
   };
 
@@ -167,51 +168,63 @@ export default function LoginPage() {
                 <Zap className="w-3.5 h-3.5 text-amber-400" />
                 <span>Test Role Profiles</span>
               </span>
-              <span className="text-[10px] text-slate-500">Click to autofill</span>
+              <span className="text-[10px] text-amber-400/90 font-medium">Click to fill email & password</span>
             </div>
             <div className="grid grid-cols-2 gap-2 text-xs">
               <button
                 type="button"
-                onClick={() => handleQuickSelect('nasir@amme-electronics.et')}
-                className="p-2 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700 text-left transition-colors cursor-pointer group"
+                onClick={() => handleQuickSelect('nasir@amme-electronics.et', 'AmmeAdmin#2026!')}
+                className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 hover:border-amber-500/50 text-left transition-all cursor-pointer group shadow-xs"
               >
-                <div className="font-semibold text-white group-hover:text-amber-400 transition-colors truncate">
+                <div className="font-bold text-white group-hover:text-amber-400 transition-colors truncate">
                   Nasir Amme
                 </div>
                 <div className="text-[10px] text-amber-400 font-medium">Administrator</div>
+                <div className="mt-1 font-mono text-[9px] text-slate-400 bg-slate-900/80 px-1.5 py-0.5 rounded border border-slate-700/50 truncate">
+                  AmmeAdmin#2026!
+                </div>
               </button>
 
               <button
                 type="button"
-                onClick={() => handleQuickSelect('yonas@amme-electronics.et')}
-                className="p-2 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700 text-left transition-colors cursor-pointer group"
+                onClick={() => handleQuickSelect('yonas@amme-electronics.et', 'YonasManager#2026!')}
+                className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 hover:border-blue-500/50 text-left transition-all cursor-pointer group shadow-xs"
               >
-                <div className="font-semibold text-white group-hover:text-blue-400 transition-colors truncate">
+                <div className="font-bold text-white group-hover:text-blue-400 transition-colors truncate">
                   Yonas Bekele
                 </div>
                 <div className="text-[10px] text-blue-400 font-medium">Store Manager</div>
+                <div className="mt-1 font-mono text-[9px] text-slate-400 bg-slate-900/80 px-1.5 py-0.5 rounded border border-slate-700/50 truncate">
+                  YonasManager#2026!
+                </div>
               </button>
 
               <button
                 type="button"
-                onClick={() => handleQuickSelect('tigist@amme-electronics.et')}
-                className="p-2 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700 text-left transition-colors cursor-pointer group"
+                onClick={() => handleQuickSelect('tigist@amme-electronics.et', 'TigistCashier#2026!')}
+                className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 hover:border-emerald-500/50 text-left transition-all cursor-pointer group shadow-xs"
               >
-                <div className="font-semibold text-white group-hover:text-emerald-400 transition-colors truncate">
+                <div className="font-bold text-white group-hover:text-emerald-400 transition-colors truncate">
                   Tigist Alem
                 </div>
                 <div className="text-[10px] text-emerald-400 font-medium">Cashier Till 1</div>
+                <div className="mt-1 font-mono text-[9px] text-slate-400 bg-slate-900/80 px-1.5 py-0.5 rounded border border-slate-700/50 truncate">
+                  TigistCashier#2026!
+                </div>
               </button>
 
               <button
                 type="button"
-                onClick={() => handleQuickSelect('abel@amme-electronics.et')}
-                className="p-2 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700 text-left transition-colors cursor-pointer group"
+                onClick={() => handleQuickSelect('abel@amme-electronics.et', 'AbelStock#2026!')}
+                className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 hover:border-purple-500/50 text-left transition-all cursor-pointer group shadow-xs"
               >
-                <div className="font-semibold text-white group-hover:text-purple-400 transition-colors truncate">
+                <div className="font-bold text-white group-hover:text-purple-400 transition-colors truncate">
                   Abel Girma
                 </div>
                 <div className="text-[10px] text-purple-400 font-medium">Stock Keeper</div>
+                <div className="mt-1 font-mono text-[9px] text-slate-400 bg-slate-900/80 px-1.5 py-0.5 rounded border border-slate-700/50 truncate">
+                  AbelStock#2026!
+                </div>
               </button>
             </div>
           </div>
