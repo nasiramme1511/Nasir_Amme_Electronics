@@ -2,9 +2,12 @@ import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { jsonSuccess, jsonError, DEFAULT_SHOP_ID } from '@/lib/apiHelper';
 import { ValidationError } from '@/lib/errors';
+import { requireAuth, requireRole } from '@/lib/authGuard';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    await requireAuth(request);
+
     const suppliers = await prisma.supplier.findMany({
       where: {
         shopId: DEFAULT_SHOP_ID,
@@ -28,6 +31,8 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    await requireRole(request, 'admin', 'manager');
+
     const body = await request.json();
     const { code, name, contactName, email, phone, city = 'Dire Dawa', addressText, paymentTerms = 'Net 15', notes } = body;
 

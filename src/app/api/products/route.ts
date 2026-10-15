@@ -3,9 +3,12 @@ import { prisma } from '@/lib/prisma';
 import { jsonSuccess, jsonError, DEFAULT_SHOP_ID } from '@/lib/apiHelper';
 import { ValidationError } from '@/lib/errors';
 import { Prisma } from '@prisma/client';
+import { requireAuth, requireRole } from '@/lib/authGuard';
 
 export async function GET(request: NextRequest) {
   try {
+    await requireAuth(request);
+
     const { searchParams } = new URL(request.url);
     const categoryId = searchParams.get('categoryId');
     const status = searchParams.get('status') ?? 'active';
@@ -50,6 +53,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    await requireRole(request, 'admin', 'manager');
+
     const body = await request.json();
     const {
       sku,

@@ -1,9 +1,12 @@
 import { NextRequest } from 'next/server';
 import { jsonSuccess, jsonError, DEFAULT_SHOP_ID } from '@/lib/apiHelper';
 import { ReportService } from '@/services/reportService';
+import { requirePermission } from '@/lib/authGuard';
 
 export async function GET(request: NextRequest) {
   try {
+    await requirePermission(request, 'reports.view');
+
     const { searchParams } = new URL(request.url);
     const start = searchParams.get('startDate');
     const end = searchParams.get('endDate');

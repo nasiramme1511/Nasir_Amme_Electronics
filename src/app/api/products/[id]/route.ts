@@ -4,12 +4,14 @@ import { jsonSuccess, jsonError, DEFAULT_SHOP_ID } from '@/lib/apiHelper';
 import { NotFoundError } from '@/lib/errors';
 import { InventoryService } from '@/services/inventoryService';
 import { Prisma } from '@prisma/client';
+import { requireAuth, requireRole } from '@/lib/authGuard';
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await requireAuth(request);
     const { id } = await params;
     const product = await prisma.product.findUnique({
       where: { id },
@@ -37,6 +39,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireRole(request, 'admin', 'manager');
     const { id } = await params;
     const body = await request.json();
 
@@ -69,6 +72,7 @@ export async function PUT(
         productId: product.id,
         newStockQuantity: Number(stockQuantity),
         reason: adjustmentReason,
+        actorId: auth.user.id,
       });
     }
 
@@ -98,10 +102,11 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await requireRole(request, 'admin');
     const { id } = await params;
     const product = await prisma.product.findUnique({ where: { id } });
 

@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
 import {
   Menu,
   Bell,
@@ -15,10 +16,12 @@ import {
   User,
   ShieldCheck,
   ChevronDown,
+  LogOut,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
 export const Header: React.FC = () => {
+  const { user: authUser, logout, roles } = useAuth();
   const {
     isSidebarCollapsed,
     setMobileNavOpen,
@@ -271,14 +274,21 @@ export const Header: React.FC = () => {
             aria-label="User profile menu"
           >
             <div className="w-8 h-8 rounded-lg bg-[#101827] text-[#D9A441] font-bold text-xs flex items-center justify-center shadow-xs">
-              NA
+              {authUser
+                ? authUser.fullName
+                    .split(' ')
+                    .map((n) => n[0])
+                    .join('')
+                    .substring(0, 2)
+                    .toUpperCase()
+                : 'ST'}
             </div>
             <div className="hidden sm:flex flex-col text-left">
               <span className="text-xs font-bold text-slate-900 leading-tight">
-                Nasir Amme
+                {authUser?.fullName || 'Authenticating...'}
               </span>
-              <span className="text-[10px] text-slate-500 font-medium">
-                Admin / Owner
+              <span className="text-[10px] text-slate-500 font-medium capitalize">
+                {roles[0]?.replace('_', ' ') || 'Staff'}
               </span>
             </div>
             <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden sm:inline" />
@@ -287,11 +297,15 @@ export const Header: React.FC = () => {
           {profileOpen && (
             <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
               <div className="px-3.5 py-2 border-b border-slate-100">
-                <div className="text-xs font-bold text-slate-900">Nasir Amme</div>
-                <div className="text-[11px] text-slate-500">nasir@amme-electronics.et</div>
+                <div className="text-xs font-bold text-slate-900">
+                  {authUser?.fullName || 'Staff Member'}
+                </div>
+                <div className="text-[11px] text-slate-500 truncate">
+                  {authUser?.email || 'authenticated'}
+                </div>
                 <div className="mt-1 flex items-center gap-1 text-[10px] text-emerald-700 font-medium">
                   <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                  <span>Full Administrator Access</span>
+                  <span className="capitalize">{roles[0]?.replace('_', ' ') || 'Staff'} Access</span>
                 </div>
               </div>
 
@@ -304,14 +318,27 @@ export const Header: React.FC = () => {
                   <User className="w-3.5 h-3.5 text-slate-400" />
                   <span>Shop Settings & Profile</span>
                 </Link>
-                <Link
-                  href="/users"
-                  onClick={() => setProfileOpen(false)}
-                  className="flex items-center gap-2 px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50"
+                {roles.includes('admin') && (
+                  <Link
+                    href="/users"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex items-center gap-2 px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Staff & Roles Matrix</span>
+                  </Link>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProfileOpen(false);
+                    logout();
+                  }}
+                  className="w-full text-left flex items-center gap-2 px-3.5 py-2 text-xs text-red-600 hover:bg-red-50 cursor-pointer transition-colors"
                 >
-                  <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Staff & Roles Matrix</span>
-                </Link>
+                  <LogOut className="w-3.5 h-3.5 text-red-500" />
+                  <span>Sign Out</span>
+                </button>
               </div>
 
               <div className="border-t border-slate-100 pt-1 px-3.5 py-2 text-[10px] text-slate-400">

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { usePathname } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
@@ -10,7 +11,18 @@ import { ReceiptModal } from '@/components/ui/ReceiptModal';
 import { Breadcrumbs } from './Breadcrumbs';
 
 export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const pathname = usePathname();
   const { isSidebarCollapsed, activeReceipt, closeReceiptModal } = useApp();
+
+  // Clean full-screen presentation for the login page
+  if (pathname === '/login') {
+    return (
+      <div className="min-h-screen bg-[#0F172A] text-slate-100 flex flex-col justify-center">
+        {children}
+        <ToastContainer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F4F6FA] text-slate-900 flex flex-col">

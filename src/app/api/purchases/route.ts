@@ -2,9 +2,12 @@ import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { jsonSuccess, jsonError, DEFAULT_SHOP_ID } from '@/lib/apiHelper';
 import { PurchaseService } from '@/services/purchaseService';
+import { requireAuth, requirePermission } from '@/lib/authGuard';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    await requireAuth(request);
+
     const orders = await prisma.purchaseOrder.findMany({
       where: {
         shopId: DEFAULT_SHOP_ID,
@@ -35,8 +38,10 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requirePermission(request, 'purchases.create');
+
     const body = await request.json();
-    const { supplierId, items, notes, expectedAt, createdBy } = body;
+    const { supplierId, items, notes, expectedAt } = body;
 
     const po = await PurchaseService.createPurchaseOrder({
       shopId: DEFAULT_SHOP_ID,
@@ -44,7 +49,7 @@ export async function POST(request: NextRequest) {
       items,
       notes,
       expectedAt,
-      createdBy,
+      createdBy: auth.user.fullName,
     });
 
     return jsonSuccess(po, 201);
