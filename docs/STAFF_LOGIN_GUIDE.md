@@ -5,7 +5,7 @@
 **Status:** **OPERATIONAL & PRODUCTION-VERIFIED (100% Tests Passed)**  
 **Target System:** Nasir Amme Electronics (Retail POS & Inventory Management System)  
 **Database Host:** Neon Lakebase PostgreSQL (`ep-round-wildflower-akpnnaj7-pooler.c-3.us-west-2.aws.neon.tech`)  
-**Primary Branch:** Dire Dawa Retail Branch (Shop ID: `shop-dire-dawa-01`, Kebele 02, Near B-Capital Hotel)  
+**Primary Branch:** Dire Dawa Retail Branch (Shop ID: `shop-dire-dawa-01`, Kebele 02, Commercial District)  
 
 ---
 

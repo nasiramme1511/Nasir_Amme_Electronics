@@ -19,6 +19,13 @@ export async function POST(request: NextRequest) {
       actorId: auth.user.id,
     });
 
+    try {
+      const { revalidatePath } = await import('next/cache');
+      revalidatePath('/admin/dashboard');
+      revalidatePath('/inventory/dashboard');
+      revalidatePath('/inventory/movements');
+    } catch {}
+
     return jsonSuccess(result);
   } catch (error) {
     return jsonError(error);

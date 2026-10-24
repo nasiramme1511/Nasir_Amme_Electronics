@@ -1,4 +1,5 @@
 import { PrismaClient, Prisma } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -11,18 +12,18 @@ async function main() {
     update: {},
     create: {
       id: 'shop-dire-dawa-01',
-      name: 'Nasir Amme Electronics',
-      legalName: 'Nasir Amme Consumer Electronics Retail & Spares',
-      tinNumber: 'DEMO-TIN-0049281734',
+      name: 'Amme Business Center',
+      legalName: 'Amme Business Center',
+      tinNumber: '456567367897891380909',
       city: 'Dire Dawa',
-      addressText: 'Kebele 02, Commercial District, Near B-Capital Hotel',
+      addressText: 'Kebele 02, Commercial District',
       countryCode: 'ET',
       currencyCode: 'ETB',
       timeZone: 'Africa/Addis_Ababa',
-      phonePrimary: '+251 915 00 11 22',
-      phoneSecondary: '+251 25 111 4455',
+      phonePrimary: '+251 996656617',
+      phoneSecondary: '+251786650163',
       email: 'info@amme-electronics.et',
-      receiptHeader: 'Welcome to Nasir Amme Electronics • Dire Dawa\nNear B-Capital Hotel • Genuine Tech Gear',
+      receiptHeader: 'Welcome to Amme Business Center• Dire Dawa\nQuality Electronics • Better Tomorrow',
       receiptFooter: 'Thank you for shopping with us!\nExchange within 3 days with valid receipt.\nWarranty terms apply to electronics with manufacturer seals.',
       taxRate: new Prisma.Decimal(0.0),
       isTaxEnabled: false,
@@ -429,13 +430,13 @@ async function main() {
       creditBalance: new Prisma.Decimal(0.0),
       totalSpent: new Prisma.Decimal(14850.0),
       loyaltyPoints: 148,
-      notes: 'Frequent buyer; works near B-Capital Hotel',
+      notes: 'Frequent buyer; wholesale and retail client',
     },
     {
       id: 'cust-03',
-      displayName: 'B-Capital Hotel IT Department',
+      displayName: 'Capital Hospitality IT Department',
       phone: '+251 25 111 8899',
-      email: 'it@bcapitalhotel.com',
+      email: 'procurement@capitalhospitality.et',
       customerType: 'wholesale',
       city: 'Dire Dawa',
       creditBalance: new Prisma.Decimal(0.0),
@@ -527,6 +528,7 @@ async function main() {
       location: 'Shelf A-02',
       description: 'Original Samsung 45W PD 3.0 PPS fast charger for Galaxy S24/S23 Ultra and Note series.',
       warrantyMonths: 12,
+      imageUrl: '/images/products/samsung-ep-t4510-45w.webp',
     },
     {
       id: 'prod-03',
@@ -557,6 +559,7 @@ async function main() {
       location: 'Counter Showcase B',
       description: 'Heavy-duty aluminum alloy car charger with dual Quick Charge 3.0 ports.',
       warrantyMonths: 3,
+      imageUrl: '/images/products/ldnio-32w-car-charger.webp',
     },
     {
       id: 'prod-05',
@@ -572,6 +575,7 @@ async function main() {
       location: 'Drawer C-01',
       description: 'E-marker chip 100W Power Delivery high speed sync and charging cable.',
       warrantyMonths: 3,
+      imageUrl: '/images/products/baseus-cafule-100w-2m.webp',
     },
     {
       id: 'prod-06',
@@ -590,18 +594,19 @@ async function main() {
     },
     {
       id: 'prod-07',
-      sku: 'CBL-ANK-3IN1',
-      barcode: '194644045213',
-      name: 'Anker PowerLine II 3-in-1 Universal Cable',
-      brand: 'Anker',
+      sku: 'CBL-OTG-3IN1',
+      barcode: '6933182109923',
+      name: 'Joyroom 3-in-1 Fast Charging Cable (Type-C / Lightning / Micro)',
+      brand: 'Joyroom',
       categorySlug: 'cables-interconnects',
-      costPrice: 580,
-      sellingPrice: 900,
-      stockQuantity: 11,
-      minStockThreshold: 8,
-      location: 'Drawer C-03',
-      description: 'Interchangeable Micro USB, USB-C, and Lightning connector heads.',
-      warrantyMonths: 12,
+      costPrice: 280,
+      sellingPrice: 480,
+      stockQuantity: 24,
+      minStockThreshold: 10,
+      location: 'Drawer C-02',
+      description: 'Durable nylon 3-in-1 cable supporting 3.5A total output.',
+      warrantyMonths: 1,
+      imageUrl: '/images/products/joyroom-3-in-1-cable.webp',
     },
     {
       id: 'prod-08',
@@ -620,33 +625,35 @@ async function main() {
     },
     {
       id: 'prod-09',
-      sku: 'AUD-ORA-FREE',
-      barcode: '4895180761201',
-      name: 'Oraimo FreePods 4 ANC TWS Wireless Earbuds',
-      brand: 'Oraimo',
+      sku: 'AUD-ANK-P20I',
+      barcode: '194644128912',
+      name: 'Soundcore by Anker P20i True Wireless Earbuds',
+      brand: 'Anker',
       categorySlug: 'audio-earbuds',
       costPrice: 1850,
-      sellingPrice: 2600,
-      stockQuantity: 24,
-      minStockThreshold: 10,
-      location: 'Shelf B-01',
-      description: 'Active Noise Cancellation, 35.5-hour playback, low latency gaming mode.',
+      sellingPrice: 2550,
+      stockQuantity: 14,
+      minStockThreshold: 6,
+      location: 'Display Cabinet 1',
+      description: '10mm drivers with custom EQ via Soundcore app, 30 hours battery life with fast charge.',
       warrantyMonths: 12,
+      imageUrl: '/images/products/soundcore-p20i-earbuds.webp',
     },
     {
       id: 'prod-10',
-      sku: 'AUD-JBL-T520',
-      barcode: '6925281966545',
-      name: 'JBL Tune 520BT Wireless On-Ear Headphones',
-      brand: 'JBL',
+      sku: 'AUD-SNY-CH520',
+      barcode: '4548736140812',
+      name: 'Sony WH-CH520 Wireless Bluetooth Headphones',
+      brand: 'Sony',
       categorySlug: 'audio-earbuds',
-      costPrice: 3400,
-      sellingPrice: 4800,
-      stockQuantity: 8,
+      costPrice: 3800,
+      sellingPrice: 5100,
+      stockQuantity: 7,
       minStockThreshold: 4,
-      location: 'Shelf B-02',
-      description: 'PureBass sound, Bluetooth 5.3, up to 57 hours battery with speed charge.',
-      warrantyMonths: 6,
+      location: 'Display Cabinet 2',
+      description: 'On-ear lightweight headphones with 50-hour battery life, multipoint pairing, DSEE audio.',
+      warrantyMonths: 12,
+      imageUrl: '/images/products/sony-wh-ch520-headphones.webp',
     },
     {
       id: 'prod-11',
@@ -680,18 +687,19 @@ async function main() {
     },
     {
       id: 'prod-13',
-      sku: 'PWR-BAS-BLD',
-      barcode: '6934177723419',
-      name: 'Baseus Blade 100W Ultra-Thin Laptop Power Bank 20000mAh',
-      brand: 'Baseus',
+      sku: 'PWR-ORA-10K-MAG',
+      barcode: '4895180771212',
+      name: 'Oraimo MagCharge 10000mAh Magnetic Wireless Power Bank',
+      brand: 'Oraimo',
       categorySlug: 'powerbanks-batteries',
-      costPrice: 5800,
-      sellingPrice: 7800,
-      stockQuantity: 7,
-      minStockThreshold: 4,
-      location: 'Shelf D-02',
-      description: 'Only 18mm thin, full 100W PD output for laptops, status digital display.',
-      warrantyMonths: 6,
+      costPrice: 2400,
+      sellingPrice: 3350,
+      stockQuantity: 8,
+      minStockThreshold: 5,
+      location: 'Display Cabinet 2',
+      description: '15W wireless MagSafe compatible battery with foldable kickstand and 20W PD Type-C port.',
+      warrantyMonths: 12,
+      imageUrl: '/images/products/oraimo-magcharge-10000mah.webp',
     },
     {
       id: 'prod-14',
@@ -755,48 +763,51 @@ async function main() {
     },
     {
       id: 'prod-18',
-      sku: 'CAS-S24U-CLR',
-      barcode: '8806091230091',
-      name: 'Spigen Ultra Hybrid Clear Case Galaxy S24 Ultra',
-      brand: 'Spigen',
+      sku: 'PRT-SAM-S24U-PV',
+      barcode: '6933182103429',
+      name: 'Samsung Galaxy S24 Ultra Privacy Anti-Spy Screen Glass',
+      brand: 'Joyroom',
       categorySlug: 'protection-cases',
-      costPrice: 920,
-      sellingPrice: 1450,
-      stockQuantity: 16,
-      minStockThreshold: 6,
-      location: 'Rack E-02',
-      description: 'Anti-yellowing crystal clear rigid back with shock-absorbing TPU bumper.',
+      costPrice: 180,
+      sellingPrice: 380,
+      stockQuantity: 32,
+      minStockThreshold: 15,
+      location: 'Drawer D-02',
+      description: '28-degree privacy filter prevents side-angle peeking, full curved coverage.',
       warrantyMonths: 0,
+      imageUrl: '/images/products/samsung-s24-ultra-privacy-glass.webp',
     },
     {
       id: 'prod-19',
-      sku: 'GLS-IP15-PRIV',
-      barcode: '6952210844129',
-      name: 'Benks 9H 28° Privacy Tempered Glass for iPhone 15/15 Pro',
-      brand: 'Benks',
+      sku: 'PRT-MAG-CASE-IP15',
+      barcode: '6953156239121',
+      name: 'Baseus Magnetic Crystal Clear Case for iPhone 15 Pro Max',
+      brand: 'Baseus',
       categorySlug: 'protection-cases',
-      costPrice: 380,
+      costPrice: 350,
       sellingPrice: 650,
-      stockQuantity: 35,
-      minStockThreshold: 15,
-      location: 'Drawer F-01',
-      description: '28-degree micro-louver privacy angle with full auto-alignment install tray.',
-      warrantyMonths: 0,
+      stockQuantity: 16,
+      minStockThreshold: 8,
+      location: 'Wall Hook E-04',
+      description: 'Anti-yellowing polycarbonate case with 38 N52 high-grade neodymium magnets for MagSafe.',
+      warrantyMonths: 1,
+      imageUrl: '/images/products/baseus-iphone-15-pro-max-case.webp',
     },
     {
       id: 'prod-20',
-      sku: 'GLS-S24U-UV',
-      barcode: '6952210844990',
-      name: 'Mocolo UV Liquid Full-Glue Curved Tempered Glass S24 Ultra',
-      brand: 'Mocolo',
+      sku: 'ACC-CAR-MNT',
+      barcode: '6953156251212',
+      name: 'Baseus 360° Magnetic Air Vent Car Phone Mount',
+      brand: 'Baseus',
       categorySlug: 'protection-cases',
-      costPrice: 420,
-      sellingPrice: 750,
-      stockQuantity: 18,
+      costPrice: 260,
+      sellingPrice: 480,
+      stockQuantity: 21,
       minStockThreshold: 8,
-      location: 'Drawer F-02',
-      description: 'Liquid optical adhesive with UV lamp curing; preserves ultrasonic fingerprint unlock.',
-      warrantyMonths: 0,
+      location: 'Counter Showcase B',
+      description: 'Compact air-vent smartphone car holder with 4 strong rubidium magnets.',
+      warrantyMonths: 6,
+      imageUrl: '/images/products/baseus-car-phone-mount.webp',
     },
   ];
 
@@ -817,12 +828,13 @@ async function main() {
 
     const productRecord = await prisma.product.upsert({
       where: {
-        shopId_sku: {
-          shopId: shop.id,
-          sku: p.sku,
-        },
+        id: p.id,
       },
       update: {
+        sku: p.sku,
+        barcode: p.barcode,
+        deletedAt: null,
+        isArchived: false,
         name: p.name,
         brand: p.brand,
         categoryId: category.id,
@@ -833,6 +845,8 @@ async function main() {
         location: p.location,
         description: p.description,
         warrantyMonths: p.warrantyMonths,
+        imageUrl: (p as any).imageUrl ?? undefined,
+        status: 'active',
       },
       create: {
         id: p.id,
@@ -849,6 +863,7 @@ async function main() {
         location: p.location,
         description: p.description,
         warrantyMonths: p.warrantyMonths,
+        imageUrl: (p as any).imageUrl ?? null,
         status: 'active',
       },
     });
@@ -879,6 +894,339 @@ async function main() {
     }
   }
   console.log(`✓ Seeded ${productsData.length} products with initial stock movement ledger records`);
+
+  // 10. Purchase Orders Seeding (Inbound Procurement)
+  console.log('Seeding enterprise purchase orders...');
+  const cableProd = await prisma.product.findFirst({ where: { sku: 'CBL-APP-LGT' } });
+  const chargerProd = await prisma.product.findFirst({ where: { sku: 'CHG-ANK20W' } });
+  const airpodProd = await prisma.product.findFirst({ where: { sku: 'AUD-AIRPRO2' } });
+
+  const supRedSea = await prisma.supplier.findFirst({ where: { code: 'SUP-RED-SEA' } });
+  const supDubai = await prisma.supplier.findFirst({ where: { code: 'SUP-DUBAI-DIRECT' } });
+
+  if (supRedSea && cableProd && chargerProd) {
+    const existingPO104 = await prisma.purchaseOrder.findFirst({
+      where: { shopId: shop.id, poNumber: 'PO-2026-104' },
+    });
+    if (!existingPO104) {
+      await prisma.purchaseOrder.create({
+        data: {
+          shopId: shop.id,
+          poNumber: 'PO-2026-104',
+          supplierId: supRedSea.id,
+          orderedAt: new Date('2026-10-10'),
+          expectedAt: new Date('2026-10-16'),
+          status: 'ordered',
+          subtotal: new Prisma.Decimal(32250.0),
+          grandTotal: new Prisma.Decimal(32250.0),
+          notes: 'Standard replenishment from Red Sea Electronics Addis Ababa hub',
+          createdBy: 'Nasir Amme',
+          items: {
+            create: [
+              {
+                productId: cableProd.id,
+                orderedQuantity: 35,
+                receivedQuantity: 0,
+                unitCost: new Prisma.Decimal(650.0),
+                totalCost: new Prisma.Decimal(22750.0),
+              },
+              {
+                productId: chargerProd.id,
+                orderedQuantity: 20,
+                receivedQuantity: 0,
+                unitCost: new Prisma.Decimal(475.0),
+                totalCost: new Prisma.Decimal(9500.0),
+              },
+            ],
+          },
+        },
+      });
+      console.log('✓ Seeded PO-2026-104 (Red Sea Electronics)');
+    }
+  }
+
+  if (supDubai && airpodProd && chargerProd) {
+    const existingPO105 = await prisma.purchaseOrder.findFirst({
+      where: { shopId: shop.id, poNumber: 'PO-2026-105' },
+    });
+    if (!existingPO105) {
+      await prisma.purchaseOrder.create({
+        data: {
+          shopId: shop.id,
+          poNumber: 'PO-2026-105',
+          supplierId: supDubai.id,
+          orderedAt: new Date('2026-10-13'),
+          expectedAt: new Date('2026-10-24'),
+          status: 'ordered',
+          subtotal: new Prisma.Decimal(112500.0),
+          grandTotal: new Prisma.Decimal(112500.0),
+          notes: 'Direct bulk electronics consignment shipped via Djibouti port',
+          createdBy: 'Nasir Amme',
+          items: {
+            create: [
+              {
+                productId: airpodProd.id,
+                orderedQuantity: 5,
+                receivedQuantity: 0,
+                unitCost: new Prisma.Decimal(19500.0),
+                totalCost: new Prisma.Decimal(97500.0),
+              },
+              {
+                productId: chargerProd.id,
+                orderedQuantity: 20,
+                receivedQuantity: 0,
+                unitCost: new Prisma.Decimal(750.0),
+                totalCost: new Prisma.Decimal(15000.0),
+              },
+            ],
+          },
+        },
+      });
+      console.log('✓ Seeded PO-2026-105 (Dubai Tech Logistics)');
+    }
+  }
+
+  // 11. POS Cash Sessions & Historical Sales Transactions
+  console.log('Seeding enterprise POS cash sessions and sales ledger...');
+
+  const cashierUser = await prisma.user.findFirst({ where: { email: 'tigist@amme-electronics.et' } });
+  const walkInCust = await prisma.customer.findFirst({ where: { displayName: { contains: 'Walk-in' } } });
+  const corpCust = await prisma.customer.findFirst({ where: { displayName: { contains: 'Capital Hospitality' } } });
+
+  // Open POS Cash Session #12
+  const activeSession = await prisma.cashSession.upsert({
+    where: {
+      shopId_sessionNumber: {
+        shopId: shop.id,
+        sessionNumber: 'CS-20261022-012',
+      },
+    },
+    update: {
+      status: 'open',
+      openingFloat: new Prisma.Decimal(12400.0),
+      totalTelebirr: new Prisma.Decimal(18450.0),
+      totalCbeBirr: new Prisma.Decimal(10200.0),
+      totalSalesCash: new Prisma.Decimal(6450.0),
+      notes: 'POS Shift #12 open (Drawer: 12,400.00 ETB)',
+    },
+    create: {
+      shopId: shop.id,
+      cashierId: cashierUser?.id || usersData[0].id,
+      sessionNumber: 'CS-20261022-012',
+      status: 'open',
+      openingFloat: new Prisma.Decimal(12400.0),
+      totalTelebirr: new Prisma.Decimal(18450.0),
+      totalCbeBirr: new Prisma.Decimal(10200.0),
+      totalSalesCash: new Prisma.Decimal(6450.0),
+      notes: 'POS Shift #12 open (Drawer: 12,400.00 ETB)',
+      openedAt: new Date(),
+    },
+  });
+  console.log(`✓ Seeded Cash Session #${activeSession.sessionNumber} (Shift #12 Open)`);
+
+  // Target products for sales
+  const p1 = await prisma.product.findFirst({ where: { id: 'prod-01' } });
+  const p2 = await prisma.product.findFirst({ where: { id: 'prod-02' } });
+  const p3 = await prisma.product.findFirst({ where: { id: 'prod-03' } });
+  const p5 = await prisma.product.findFirst({ where: { id: 'prod-05' } });
+  const p8 = await prisma.product.findFirst({ where: { id: 'prod-08' } });
+  const p12 = await prisma.product.findFirst({ where: { id: 'prod-12' } });
+  const p18 = await prisma.product.findFirst({ where: { id: 'prod-18' } });
+
+  const salesToSeed = [
+    {
+      receiptNumber: 'REC-2026-0084',
+      soldAt: new Date(),
+      subtotal: 2450.0,
+      grandTotal: 2450.0,
+      paymentMethod: 'telebirr',
+      customerId: walkInCust?.id,
+      customerNotes: 'Walk-in Counter',
+      items: [
+        { prod: p5 || p1, qty: 1, price: 1500.0, cogs: 950.0 },
+        { prod: p18 || p3, qty: 1, price: 950.0, cogs: 400.0 },
+      ],
+    },
+    {
+      receiptNumber: 'REC-2026-0083',
+      soldAt: new Date(Date.now() - 1000 * 60 * 75),
+      subtotal: 5000.0,
+      grandTotal: 5000.0,
+      paymentMethod: 'cbe_birr',
+      customerId: walkInCust?.id,
+      customerNotes: 'Gende Kore Phone Clinic',
+      items: [
+        { prod: p2 || p1, qty: 2, price: 2500.0, cogs: 1600.0 },
+      ],
+    },
+    {
+      receiptNumber: 'REC-2026-0082',
+      soldAt: new Date(Date.now() - 1000 * 60 * 145),
+      subtotal: 8700.0,
+      grandTotal: 8700.0,
+      paymentMethod: 'cash',
+      customerId: walkInCust?.id,
+      customerNotes: 'Dr. Henok Tadesse',
+      items: [
+        { prod: p12 || p1, qty: 1, price: 4200.0, cogs: 2900.0 },
+        { prod: p3 || p1, qty: 3, price: 1500.0, cogs: 900.0 },
+      ],
+    },
+    {
+      receiptNumber: 'REC-2026-0081',
+      soldAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
+      subtotal: 2950.0,
+      grandTotal: 2950.0,
+      paymentMethod: 'telebirr',
+      customerId: walkInCust?.id,
+      customerNotes: 'Walk-in Counter',
+      items: [
+        { prod: p1 || p3, qty: 1, price: 2000.0, cogs: 1300.0 },
+        { prod: p18 || p3, qty: 1, price: 950.0, cogs: 400.0 },
+      ],
+    },
+    {
+      receiptNumber: 'REC-2026-0080',
+      soldAt: new Date(Date.now() - 1000 * 60 * 60 * 26),
+      subtotal: 8000.0,
+      grandTotal: 8000.0,
+      paymentMethod: 'bank_transfer',
+      customerId: corpCust?.id,
+      customerNotes: 'Capital Hospitality Group',
+      items: [
+        { prod: p2 || p1, qty: 2, price: 2500.0, cogs: 1600.0 },
+        { prod: p5 || p1, qty: 2, price: 1500.0, cogs: 950.0 },
+      ],
+    },
+    {
+      receiptNumber: 'REC-2026-0079',
+      soldAt: new Date(Date.now() - 1000 * 60 * 60 * 48),
+      subtotal: 4500.0,
+      grandTotal: 4500.0,
+      paymentMethod: 'cbe_birr',
+      customerId: walkInCust?.id,
+      customerNotes: 'Taiwan Market Retail Client',
+      items: [
+        { prod: p12 || p1, qty: 1, price: 4500.0, cogs: 2900.0 },
+      ],
+    },
+    {
+      receiptNumber: 'REC-2026-0078',
+      soldAt: new Date(Date.now() - 1000 * 60 * 60 * 72),
+      subtotal: 12000.0,
+      grandTotal: 12000.0,
+      paymentMethod: 'telebirr',
+      customerId: walkInCust?.id,
+      customerNotes: 'Dire Dawa University Staff',
+      items: [
+        { prod: p1 || p2, qty: 4, price: 2000.0, cogs: 1300.0 },
+        { prod: p12 || p3, qty: 1, price: 4000.0, cogs: 2900.0 },
+      ],
+    },
+    {
+      receiptNumber: 'REC-2026-0077',
+      soldAt: new Date(Date.now() - 1000 * 60 * 60 * 96),
+      subtotal: 6500.0,
+      grandTotal: 6500.0,
+      paymentMethod: 'cash',
+      customerId: walkInCust?.id,
+      customerNotes: 'Walk-in Counter',
+      items: [
+        { prod: p3 || p1, qty: 3, price: 1500.0, cogs: 900.0 },
+        { prod: p5 || p1, qty: 2, price: 1000.0, cogs: 600.0 },
+      ],
+    },
+    {
+      receiptNumber: 'REC-2026-0076',
+      soldAt: new Date(Date.now() - 1000 * 60 * 60 * 120),
+      subtotal: 9200.0,
+      grandTotal: 9200.0,
+      paymentMethod: 'cbe_birr',
+      customerId: corpCust?.id,
+      customerNotes: 'B-Capital Hotel IT',
+      items: [
+        { prod: p1 || p2, qty: 3, price: 2000.0, cogs: 1300.0 },
+        { prod: p2 || p1, qty: 1, price: 3200.0, cogs: 2000.0 },
+      ],
+    },
+    {
+      receiptNumber: 'REC-2026-0075',
+      soldAt: new Date(Date.now() - 1000 * 60 * 60 * 144),
+      subtotal: 7800.0,
+      grandTotal: 7800.0,
+      paymentMethod: 'telebirr',
+      customerId: walkInCust?.id,
+      customerNotes: 'Walk-in Counter',
+      items: [
+        { prod: p12 || p1, qty: 1, price: 4200.0, cogs: 2900.0 },
+        { prod: p5 || p3, qty: 3, price: 1200.0, cogs: 700.0 },
+      ],
+    },
+  ];
+
+  for (const s of salesToSeed) {
+    const existing = await prisma.sale.findUnique({
+      where: {
+        shopId_receiptNumber: {
+          shopId: shop.id,
+          receiptNumber: s.receiptNumber,
+        },
+      },
+    });
+
+    if (!existing) {
+      const createdSale = await prisma.sale.create({
+        data: {
+          shopId: shop.id,
+          receiptNumber: s.receiptNumber,
+          customerId: s.customerId,
+          cashierId: cashierUser?.id || usersData[0].id,
+          status: 'posted',
+          soldAt: s.soldAt,
+          subtotal: new Prisma.Decimal(s.subtotal),
+          discountTotal: new Prisma.Decimal(0.0),
+          taxTotal: new Prisma.Decimal(0.0),
+          grandTotal: new Prisma.Decimal(s.grandTotal),
+          notes: s.customerNotes,
+          items: {
+            create: s.items
+              .filter((it) => it.prod)
+              .map((it) => ({
+                productId: it.prod!.id,
+                skuSnapshot: it.prod!.sku,
+                nameSnapshot: it.prod!.name,
+                quantity: it.qty,
+                unitPrice: new Prisma.Decimal(it.price),
+                unitCostSnapshot: new Prisma.Decimal(it.cogs),
+                lineSubtotal: new Prisma.Decimal(it.price * it.qty),
+                lineTotal: new Prisma.Decimal(it.price * it.qty),
+                lineCogs: new Prisma.Decimal(it.cogs * it.qty),
+                lineGrossProfit: new Prisma.Decimal((it.price - it.cogs) * it.qty),
+                warrantyMonthsSnapshot: it.prod!.warrantyMonths || 6,
+              })),
+          },
+          payments: {
+            create: [
+              {
+                shopId: shop.id,
+                cashSessionId: activeSession.id,
+                method: s.paymentMethod,
+                status: 'succeeded',
+                amount: new Prisma.Decimal(s.grandTotal),
+                amountTendered: new Prisma.Decimal(s.grandTotal),
+                changeGiven: new Prisma.Decimal(0.0),
+                currencyCode: 'ETB',
+                providerReference: `FT-REF-${Math.floor(100000 + Math.random() * 900000)}`,
+                recordedBy: cashierUser?.fullName || 'Tigist Alem',
+                receivedAt: s.soldAt,
+              },
+            ],
+          },
+        },
+      });
+      console.log(`✓ Seeded Sale ${createdSale.receiptNumber} (${s.grandTotal} ETB)`);
+    }
+  }
 
   console.log('✅ Phase 1 Database Seed Completed Successfully!');
 }

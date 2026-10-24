@@ -5,7 +5,7 @@
 **Document status:** Design specification — not an implementation  
 **Version:** 1.0  
 **Prepared:** 15 October 2026  
-**Business context:** Single-shop electronics retailer in Dire Dawa, Ethiopia (near B-Capital Hotel)  
+**Business context:** Single-shop electronics retailer in Dire Dawa, Ethiopia  
 **Currency:** Ethiopian birr (ETB)  
 **Proposed stack:** Next.js App Router + TypeScript, PostgreSQL, Prisma ORM  
 **Scope boundary:** No application backend code, Prisma schema, SQL DDL, migrations, or deployment configuration are created by this document.

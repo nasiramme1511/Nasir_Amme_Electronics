@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
+import { useTheme } from '@/context/ThemeContext';
 import {
   TrendingUp,
   Download,
@@ -30,6 +31,8 @@ import {
 
 export default function ReportsPage() {
   const { sales, products, categories, suppliers, returns, addToast } = useApp();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
 
   const [activeTab, setActiveTab] = useState<
     'sales' | 'products' | 'valuation' | 'suppliers' | 'returns'
@@ -159,15 +162,15 @@ export default function ReportsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
               Reports & Business Analytics
             </h1>
             <Badge variant="accent" size="sm">
-              Demonstration Intelligence
+              Analytics Overview
             </Badge>
           </div>
-          <p className="text-sm text-slate-500 mt-1">
-            Sales volume, product margins, inventory valuation, and supplier performance metrics in Dire Dawa.
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Track sales trends, inventory valuation, and business performance.
           </p>
         </div>
 
@@ -178,11 +181,11 @@ export default function ReportsPage() {
             onChange={(e) =>
               setDateRange(e.target.value as '7days' | '30days' | 'quarter')
             }
-            className="text-xs px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-[#D9A441]"
+            className="text-xs px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-[#D9A441]"
           >
-            <option value="7days">Last 7 Days</option>
-            <option value="30days">Last 30 Days (Monthly)</option>
-            <option value="quarter">Current Quarter (Q4)</option>
+            <option className="dark:bg-slate-900" value="7days">Last 7 Days</option>
+            <option className="dark:bg-slate-900" value="30days">Last 30 Days (Monthly)</option>
+            <option className="dark:bg-slate-900" value="quarter">Current Quarter (Q4)</option>
           </select>
 
           <Button
@@ -197,13 +200,13 @@ export default function ReportsPage() {
       </div>
 
       {/* Report Segmented Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto border-b border-slate-200 pb-2">
+      <div className="flex items-center gap-2 overflow-x-auto border-b border-slate-200 dark:border-slate-800 pb-2">
         <button
           onClick={() => setActiveTab('sales')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
             activeTab === 'sales'
               ? 'bg-[#101827] text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-100'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
           }`}
         >
           <TrendingUp className="w-4 h-4 text-[#D9A441]" />
@@ -215,7 +218,7 @@ export default function ReportsPage() {
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
             activeTab === 'products'
               ? 'bg-[#101827] text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-100'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
           }`}
         >
           <Package className="w-4 h-4 text-[#D9A441]" />
@@ -227,7 +230,7 @@ export default function ReportsPage() {
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
             activeTab === 'valuation'
               ? 'bg-[#101827] text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-100'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
           }`}
         >
           <Boxes className="w-4 h-4 text-[#D9A441]" />
@@ -239,7 +242,7 @@ export default function ReportsPage() {
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
             activeTab === 'suppliers'
               ? 'bg-[#101827] text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-100'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
           }`}
         >
           <Truck className="w-4 h-4 text-[#D9A441]" />
@@ -251,7 +254,7 @@ export default function ReportsPage() {
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
             activeTab === 'returns'
               ? 'bg-[#101827] text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-100'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
           }`}
         >
           <RotateCcw className="w-4 h-4 text-[#D9A441]" />
@@ -271,8 +274,8 @@ export default function ReportsPage() {
                 </CardDescription>
               </div>
               <div className="flex items-center gap-3 text-xs">
-                <span className="flex items-center gap-1.5 font-semibold text-slate-800">
-                  <span className="w-3 h-3 rounded-full bg-[#101827]" />
+                <span className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200">
+                  <span className="w-3 h-3 rounded-full bg-[#101827] dark:bg-slate-200" />
                   Total Revenue (ETB)
                 </span>
                 <span className="flex items-center gap-1.5 font-semibold text-[#16845B]">
@@ -288,7 +291,7 @@ export default function ReportsPage() {
                     data={salesTrendData}
                     margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#1e293b' : '#f1f5f9'} vertical={false} />
                     <XAxis
                       dataKey="period"
                       stroke="#94a3b8"
@@ -305,10 +308,10 @@ export default function ReportsPage() {
                     />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: '#101827',
-                        borderColor: '#334155',
+                        backgroundColor: isDark ? '#101726' : '#ffffff',
+                        border: isDark ? '1px solid #1e293b' : '1px solid #e2e8f0',
                         borderRadius: '12px',
-                        color: '#fff',
+                        color: isDark ? '#f8fafc' : '#0f172a',
                         fontSize: '12px',
                       }}
                       formatter={(val) => [formatETB(Number(val) || 0), '']}
@@ -316,9 +319,9 @@ export default function ReportsPage() {
                     <Area
                       type="monotone"
                       dataKey="revenue"
-                      stroke="#101827"
+                      stroke={isDark ? '#e2e8f0' : '#101827'}
                       strokeWidth={3}
-                      fill="#101827"
+                      fill={isDark ? '#e2e8f0' : '#101827'}
                       fillOpacity={0.15}
                       name="Revenue"
                     />
@@ -350,7 +353,7 @@ export default function ReportsPage() {
           </CardHeader>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-slate-600 text-xs font-semibold border-b border-slate-200">
+              <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 text-xs font-semibold border-b border-slate-200 dark:border-slate-800">
                 <tr>
                   <th className="py-3 px-4">Product Name</th>
                   <th className="py-3 px-4">Brand</th>
@@ -361,28 +364,28 @@ export default function ReportsPage() {
                   <th className="py-3 px-4 text-center">Margin %</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {productPerformanceData.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50/70">
+                  <tr key={item.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
                     <td className="py-3 px-4">
-                      <div className="font-semibold text-slate-900 text-xs">{item.name}</div>
-                      <div className="font-mono text-[10px] text-slate-400">{item.sku}</div>
+                      <div className="font-semibold text-slate-900 dark:text-white text-xs">{item.name}</div>
+                      <div className="font-mono text-[10px] text-slate-400 dark:text-slate-500">{item.sku}</div>
                     </td>
-                    <td className="py-3 px-4 text-xs text-slate-600">{item.brand}</td>
-                    <td className="py-3 px-4 text-center font-bold text-slate-800 text-xs">
+                    <td className="py-3 px-4 text-xs text-slate-600 dark:text-slate-400">{item.brand}</td>
+                    <td className="py-3 px-4 text-center font-bold text-slate-800 dark:text-slate-200 text-xs">
                       {item.soldUnits} pcs
                     </td>
-                    <td className="py-3 px-4 text-right text-xs text-slate-700">
+                    <td className="py-3 px-4 text-right text-xs text-slate-700 dark:text-slate-200">
                       {formatETB(item.sellingPrice)}
                     </td>
-                    <td className="py-3 px-4 text-right font-bold text-slate-900 text-xs">
+                    <td className="py-3 px-4 text-right font-bold text-slate-900 dark:text-white text-xs">
                       {formatETB(item.revenue)}
                     </td>
                     <td className="py-3 px-4 text-right font-bold text-[#16845B] text-xs">
                       {formatETB(item.profit)}
                     </td>
                     <td className="py-3 px-4 text-center text-xs font-semibold">
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900">
                         {item.margin}%
                       </span>
                     </td>
@@ -413,7 +416,7 @@ export default function ReportsPage() {
                     data={categoryValuationData}
                     margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#1e293b' : '#f1f5f9'} vertical={false} />
                     <XAxis
                       dataKey="category"
                       stroke="#94a3b8"
@@ -430,10 +433,10 @@ export default function ReportsPage() {
                     />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: '#101827',
-                        borderColor: '#334155',
+                        backgroundColor: isDark ? '#101726' : '#ffffff',
+                        border: isDark ? '1px solid #1e293b' : '1px solid #e2e8f0',
                         borderRadius: '12px',
-                        color: '#fff',
+                        color: isDark ? '#f8fafc' : '#0f172a',
                         fontSize: '12px',
                       }}
                       formatter={(val) => [formatETB(Number(val) || 0), '']}
@@ -442,7 +445,7 @@ export default function ReportsPage() {
                     <Bar
                       dataKey="costValue"
                       name="Cost Investment (ETB)"
-                      fill="#101827"
+                      fill={isDark ? '#e2e8f0' : '#101827'}
                       radius={[4, 4, 0, 0]}
                     />
                     <Bar
@@ -470,7 +473,7 @@ export default function ReportsPage() {
           </CardHeader>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-slate-600 text-xs font-semibold border-b border-slate-200">
+              <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 text-xs font-semibold border-b border-slate-200 dark:border-slate-800">
                 <tr>
                   <th className="py-3 px-4">Supplier Name</th>
                   <th className="py-3 px-4 font-mono">Code</th>
@@ -479,22 +482,22 @@ export default function ReportsPage() {
                   <th className="py-3 px-4 text-right">Outstanding Balance (ETB)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {supplierPurchaseData.map((sup) => (
-                  <tr key={sup.code} className="hover:bg-slate-50/70">
-                    <td className="py-3 px-4 font-bold text-slate-900 text-xs">
+                  <tr key={sup.code} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                    <td className="py-3 px-4 font-bold text-slate-900 dark:text-white text-xs">
                       {sup.name}
                     </td>
-                    <td className="py-3 px-4 font-mono text-slate-500 text-xs">{sup.code}</td>
+                    <td className="py-3 px-4 font-mono text-slate-500 dark:text-slate-400 text-xs">{sup.code}</td>
                     <td className="py-3 px-4 text-xs">
                       <Badge variant="neutral" size="sm">
                         {sup.terms}
                       </Badge>
                     </td>
-                    <td className="py-3 px-4 text-right font-medium text-slate-900 text-xs">
+                    <td className="py-3 px-4 text-right font-medium text-slate-900 dark:text-white text-xs">
                       {formatETB(sup.totalPurchased)}
                     </td>
-                    <td className="py-3 px-4 text-right font-bold text-xs text-amber-700">
+                    <td className="py-3 px-4 text-right font-bold text-xs text-amber-700 dark:text-amber-400">
                       {formatETB(sup.balanceDue)}
                     </td>
                   </tr>
@@ -516,23 +519,23 @@ export default function ReportsPage() {
           </CardHeader>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-slate-600 text-xs font-semibold border-b border-slate-200">
+              <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 text-xs font-semibold border-b border-slate-200 dark:border-slate-800">
                 <tr>
                   <th className="py-3 px-4">Return Classification</th>
                   <th className="py-3 px-4 text-center">Units Count</th>
                   <th className="py-3 px-4 text-right">Total Refunded (ETB)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {returnsReasonData.map((r, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50/70">
-                    <td className="py-3 px-4 font-semibold text-slate-900 text-xs">
+                  <tr key={idx} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                    <td className="py-3 px-4 font-semibold text-slate-900 dark:text-white text-xs">
                       {r.reason}
                     </td>
-                    <td className="py-3 px-4 text-center font-bold text-slate-800 text-xs">
+                    <td className="py-3 px-4 text-center font-bold text-slate-800 dark:text-slate-200 text-xs">
                       {r.units} pcs
                     </td>
-                    <td className="py-3 px-4 text-right font-bold text-rose-700 text-xs">
+                    <td className="py-3 px-4 text-right font-bold text-rose-700 dark:text-rose-400 text-xs">
                       {formatETB(r.refundETB)}
                     </td>
                   </tr>

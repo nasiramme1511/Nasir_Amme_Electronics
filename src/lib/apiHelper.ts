@@ -1,11 +1,36 @@
 import { NextResponse } from 'next/server';
 import { AppError } from './errors';
+import { ZodError } from 'zod';
 
 export function jsonSuccess<T>(data: T, status = 200) {
   return NextResponse.json({ success: true, data }, { status });
 }
 
 export function jsonError(error: unknown) {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'digest' in error &&
+    typeof (error as { digest: unknown }).digest === 'string' &&
+    (error as { digest: string }).digest.startsWith('NEXT_')
+  ) {
+    throw error;
+  }
+
+  if (error instanceof ZodError) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          message: error.issues.map((i) => i.message).join(', ') || 'Validation error.',
+          code: 'VALIDATION_ERROR',
+          details: error.issues,
+        },
+      },
+      { status: 400 }
+    );
+  }
+
   if (error instanceof AppError) {
     return NextResponse.json(
       {

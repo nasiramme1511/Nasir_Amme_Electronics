@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
 import { PurchaseOrder, PurchaseOrderItem } from '@/types';
 import {
   Plus,
@@ -10,8 +11,9 @@ import {
   Download,
   Eye,
   Trash2,
-  Boxes,
   FileCheck,
+  Truck,
+  Layers,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -19,6 +21,7 @@ import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { formatETB, formatDate, formatDateShort } from '@/lib/formatters';
 import { exportToCSV } from '@/lib/export';
+import PurchasesViewLive from '@/components/purchases/PurchasesViewLive';
 
 export default function PurchasesPage() {
   const {
@@ -27,13 +30,17 @@ export default function PurchasesPage() {
     products,
     createPurchaseOrder,
     receivePurchaseOrder,
+    deletePurchaseOrder,
     addToast,
   } = useApp();
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState<'live' | 'all'>('live');
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [inspectingPO, setInspectingPO] = useState<PurchaseOrder | null>(null);
   const [receivingPO, setReceivingPO] = useState<PurchaseOrder | null>(null);
+  const [poToDelete, setPOToDelete] = useState<PurchaseOrder | null>(null);
   const [isDraftModalOpen, setIsDraftModalOpen] = useState(false);
   const [isReceiving, setIsReceiving] = useState(false);
 
@@ -209,15 +216,15 @@ export default function PurchasesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
               Purchases & Goods Receiving
             </h1>
             <Badge variant="accent" size="sm">
               {purchaseOrders.length} Orders
             </Badge>
           </div>
-          <p className="text-sm text-slate-500 mt-1">
-            Supplier purchase orders, shipping tracking, and inventory posting to Dire Dawa store.
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Track purchase orders and incoming supplier stock.
           </p>
         </div>
 
@@ -241,20 +248,45 @@ export default function PurchasesPage() {
         </div>
       </div>
 
-      {/* Guidance Alert Banner */}
-      <div className="bg-slate-900 text-slate-200 rounded-xl p-4 flex items-start gap-3 text-xs border border-slate-800">
-        <Boxes className="w-5 h-5 text-[#D9A441] shrink-0 mt-0.5" />
-        <div className="leading-relaxed">
-          <strong className="text-white">Interactive Goods Receiving:</strong> When supplier
-          deliveries arrive at Dire Dawa, click <strong>&quot;Receive Goods&quot;</strong> on any ordered PO.
-          The system will instantly increment stock counts in the product catalog and write an
-          official movement ledger entry. In the future production backend, this action triggers
-          automated 3-way matching against vendor bills.
-        </div>
+      {/* Tab Navigation */}
+      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+        <button
+          onClick={() => setActiveTab('live')}
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+            activeTab === 'live'
+              ? 'bg-indigo-600 text-white shadow-sm'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+          }`}
+        >
+          <Truck className="w-4 h-4" />
+          Live Goods Receiving (GRN)
+          <span className="px-1.5 py-0.5 rounded text-[10px] bg-indigo-500/30 text-white font-mono">
+            PostgreSQL Ledger
+          </span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('all')}
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+            activeTab === 'all'
+              ? 'bg-indigo-600 text-white shadow-sm'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+          }`}
+        >
+          <Layers className="w-4 h-4" />
+          PO History & Drafter
+          <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono">
+            {purchaseOrders.length}
+          </span>
+        </button>
       </div>
 
-      {/* Filters */}
-      <Card>
+      {activeTab === 'live' ? (
+        <PurchasesViewLive adminUserId={user?.id || 'usr-01'} hideHeader={true} />
+      ) : (
+        <>
+          {/* Filters */}
+          <Card>
         <div className="p-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
           <div className="relative flex-1 max-w-md">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -263,7 +295,7 @@ export default function PurchasesPage() {
               placeholder="Search by PO # or supplier name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#D9A441] bg-slate-50/50"
+              className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-[#D9A441] bg-slate-50/50 dark:bg-slate-900/60"
             />
           </div>
 
@@ -271,12 +303,12 @@ export default function PurchasesPage() {
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="text-xs px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#D9A441]"
+              className="text-xs px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#D9A441]"
             >
-              <option value="all">All PO Statuses</option>
-              <option value="draft">Drafts</option>
-              <option value="ordered">Ordered (In Transit)</option>
-              <option value="received">Received (Posted)</option>
+              <option value="all" className="dark:bg-slate-900">All PO Statuses</option>
+              <option value="draft" className="dark:bg-slate-900">Drafts</option>
+              <option value="ordered" className="dark:bg-slate-900">Ordered (In Transit)</option>
+              <option value="received" className="dark:bg-slate-900">Received (Posted)</option>
             </select>
           </div>
         </div>
@@ -286,7 +318,7 @@ export default function PurchasesPage() {
       <Card>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50/80 text-slate-600 text-xs font-semibold border-b border-slate-200">
+            <thead className="bg-slate-50/80 dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 text-xs font-semibold border-b border-slate-200 dark:border-slate-800">
               <tr>
                 <th className="py-3 px-4">PO Number</th>
                 <th className="py-3 px-4">Order Date</th>
@@ -297,32 +329,32 @@ export default function PurchasesPage() {
                 <th className="py-3 px-4 text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filteredPOs.map((po) => {
                 const isOrdered = po.status === 'ordered';
                 const isReceived = po.status === 'received';
 
                 return (
-                  <tr key={po.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-3.5 px-4 font-mono font-semibold text-slate-900">
+                  <tr key={po.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+                    <td className="py-3.5 px-4 font-mono font-semibold text-slate-900 dark:text-white">
                       {po.poNumber}
                     </td>
-                    <td className="py-3.5 px-4 text-xs text-slate-600">
+                    <td className="py-3.5 px-4 text-xs text-slate-600 dark:text-slate-400">
                       {formatDateShort(po.date)}
                     </td>
                     <td className="py-3.5 px-4">
-                      <div className="font-semibold text-slate-800 text-xs">
+                      <div className="font-semibold text-slate-800 dark:text-slate-200 text-xs">
                         {po.supplierName}
                       </div>
                       <div className="text-[10px] text-slate-400">
                         Delivery due: {formatDateShort(po.expectedDelivery)}
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 text-xs text-slate-600">
+                    <td className="py-3.5 px-4 text-xs text-slate-600 dark:text-slate-400">
                       {po.items.length} item(s) (
                       {po.items.reduce((s, i) => s + i.orderedQty, 0)} units)
                     </td>
-                    <td className="py-3.5 px-4 text-right font-bold text-slate-900">
+                    <td className="py-3.5 px-4 text-right font-bold text-slate-900 dark:text-white">
                       {formatETB(po.totalAmount)}
                     </td>
                     <td className="py-3.5 px-4 text-center">
@@ -344,7 +376,7 @@ export default function PurchasesPage() {
                       <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => setInspectingPO(po)}
-                          className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md"
+                          className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md"
                           title="View PO Details"
                           aria-label={`View ${po.poNumber}`}
                         >
@@ -362,6 +394,17 @@ export default function PurchasesPage() {
                             Receive Goods
                           </Button>
                         )}
+
+                        {po.status !== 'received' && (
+                          <button
+                            onClick={() => setPOToDelete(po)}
+                            className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-md"
+                            title="Delete Purchase Order"
+                            aria-label={`Delete ${po.poNumber}`}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -370,7 +413,7 @@ export default function PurchasesPage() {
 
               {filteredPOs.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-slate-500 text-xs">
+                  <td colSpan={7} className="py-8 text-center text-slate-500 dark:text-slate-400 text-xs">
                     No purchase orders match this filter.
                   </td>
                 </tr>
@@ -379,6 +422,8 @@ export default function PurchasesPage() {
           </table>
         </div>
       </Card>
+      </>
+      )}
 
       {/* PO Detail View Modal */}
       {inspectingPO && (
@@ -395,30 +440,30 @@ export default function PurchasesPage() {
           }
         >
           <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs">
+            <div className="grid grid-cols-3 gap-3 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-200 dark:border-slate-800 text-xs">
               <div>
                 <span className="text-slate-400 block font-semibold">Order Total</span>
-                <span className="text-sm font-bold text-slate-900">
+                <span className="text-sm font-bold text-slate-900 dark:text-white">
                   {formatETB(inspectingPO.totalAmount)}
                 </span>
               </div>
               <div>
                 <span className="text-slate-400 block font-semibold">Status</span>
-                <span className="text-xs font-bold uppercase text-slate-800">
+                <span className="text-xs font-bold uppercase text-slate-800 dark:text-slate-200">
                   {inspectingPO.status}
                 </span>
               </div>
               <div>
                 <span className="text-slate-400 block font-semibold">Expected In Dire Dawa</span>
-                <span className="text-xs font-semibold text-slate-700">
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
                   {formatDateShort(inspectingPO.expectedDelivery)}
                 </span>
               </div>
             </div>
 
-            <div className="overflow-x-auto border border-slate-200 rounded-lg">
+            <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
+                <thead className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold border-b border-slate-200 dark:border-slate-800">
                   <tr>
                     <th className="py-2 px-3">Item / Description</th>
                     <th className="py-2 px-3 font-mono">SKU</th>
@@ -427,20 +472,20 @@ export default function PurchasesPage() {
                     <th className="py-2 px-3 text-right">Total (ETB)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {inspectingPO.items.map((item, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50">
-                      <td className="py-2 px-3 font-medium text-slate-900">
+                    <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                      <td className="py-2 px-3 font-medium text-slate-900 dark:text-white">
                         {item.productName}
                       </td>
-                      <td className="py-2 px-3 font-mono text-slate-500">{item.sku}</td>
-                      <td className="py-2 px-3 text-center font-bold text-slate-800">
+                      <td className="py-2 px-3 font-mono text-slate-500 dark:text-slate-400">{item.sku}</td>
+                      <td className="py-2 px-3 text-center font-bold text-slate-800 dark:text-slate-200">
                         {item.orderedQty} pcs
                       </td>
-                      <td className="py-2 px-3 text-right text-slate-700">
+                      <td className="py-2 px-3 text-right text-slate-700 dark:text-slate-200">
                         {formatETB(item.unitCost)}
                       </td>
-                      <td className="py-2 px-3 text-right font-bold text-slate-900">
+                      <td className="py-2 px-3 text-right font-bold text-slate-900 dark:text-white">
                         {formatETB(item.totalCost)}
                       </td>
                     </tr>
@@ -450,7 +495,7 @@ export default function PurchasesPage() {
             </div>
 
             {inspectingPO.notes && (
-              <div className="p-3 bg-amber-50/60 rounded-lg border border-amber-200 text-xs text-amber-900">
+              <div className="p-3 bg-amber-50/60 dark:bg-amber-950/40 rounded-lg border border-amber-200 dark:border-amber-900 text-xs text-amber-900 dark:text-amber-400">
                 <strong>Logistics Notes:</strong> {inspectingPO.notes}
               </div>
             )}
@@ -489,25 +534,25 @@ export default function PurchasesPage() {
           }
         >
           <div className="space-y-4 text-xs">
-            <p className="text-slate-600 leading-relaxed">
+            <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
               Receiving will update active shelf inventory for the following items in Dire Dawa:
             </p>
 
-            <div className="bg-slate-50 rounded-xl p-3 border border-slate-200 space-y-2">
+            <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3 border border-slate-200 dark:border-slate-800 space-y-2">
               {receivingPO.items.map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between py-1 border-b border-slate-200 last:border-0">
+                <div key={idx} className="flex items-center justify-between py-1 border-b border-slate-200 dark:border-slate-800 last:border-0">
                   <div>
-                    <span className="font-semibold text-slate-900 block">{item.productName}</span>
+                    <span className="font-semibold text-slate-900 dark:text-white block">{item.productName}</span>
                     <span className="font-mono text-[10px] text-slate-400">{item.sku}</span>
                   </div>
-                  <span className="px-2 py-1 bg-emerald-100 text-emerald-800 font-bold rounded">
+                  <span className="px-2 py-1 bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-400 font-bold rounded">
                     +{item.orderedQty} units
                   </span>
                 </div>
               ))}
             </div>
 
-            <div className="p-3 bg-blue-50 text-blue-800 rounded-lg border border-blue-200">
+            <div className="p-3 bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-400 rounded-lg border border-blue-200 dark:border-blue-900">
               Responsible Receiver: <strong>Abel Girma (Store Clerk)</strong>. A stock movement record will be generated automatically.
             </div>
           </div>
@@ -524,23 +569,23 @@ export default function PurchasesPage() {
       >
         <div className="space-y-4">
           {draftError && (
-            <div className="p-3 bg-rose-50 text-rose-700 text-xs rounded-lg border border-rose-200">
+            <div className="p-3 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 text-xs rounded-lg border border-rose-200 dark:border-rose-900">
               {draftError}
             </div>
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
                 Select Supplier *
               </label>
               <select
                 value={selectedSupplierId}
                 onChange={(e) => setSelectedSupplierId(e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#D9A441]"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#D9A441]"
               >
                 {suppliers.map((sup) => (
-                  <option key={sup.id} value={sup.id}>
+                  <option key={sup.id} value={sup.id} className="dark:bg-slate-900">
                     {sup.name} ({sup.city})
                   </option>
                 ))}
@@ -548,14 +593,14 @@ export default function PurchasesPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
                 Expected Delivery Date
               </label>
               <input
                 type="date"
                 value={deliveryDate}
                 onChange={(e) => setDeliveryDate(e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#D9A441]"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#D9A441]"
               />
             </div>
           </div>
@@ -563,7 +608,7 @@ export default function PurchasesPage() {
           {/* Line items list */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Product Line Items
               </label>
               <Button
@@ -581,16 +626,16 @@ export default function PurchasesPage() {
               {poLines.map((line, idx) => (
                 <div
                   key={idx}
-                  className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-2.5 bg-slate-50 rounded-lg border border-slate-200"
+                  className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-800"
                 >
                   <div className="flex-1">
                     <select
                       value={line.productId}
                       onChange={(e) => handleProductChange(idx, e.target.value)}
-                      className="w-full text-xs px-2.5 py-1.5 rounded border border-slate-300 bg-white"
+                      className="w-full text-xs px-2.5 py-1.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 dark:text-white"
                     >
                       {products.map((p) => (
-                        <option key={p.id} value={p.id}>
+                        <option key={p.id} value={p.id} className="dark:bg-slate-900">
                           {p.name} ({p.brand}) - Current: {p.stockQuantity} pcs
                         </option>
                       ))}
@@ -607,7 +652,7 @@ export default function PurchasesPage() {
                         onChange={(e) =>
                           handleLineValueChange(idx, 'quantity', Number(e.target.value))
                         }
-                        className="w-full text-xs px-2 py-1.5 rounded border border-slate-300 text-center font-bold"
+                        className="w-full text-xs px-2 py-1.5 rounded border border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-white text-center font-bold"
                       />
                     </div>
 
@@ -620,11 +665,11 @@ export default function PurchasesPage() {
                         onChange={(e) =>
                           handleLineValueChange(idx, 'unitCost', Number(e.target.value))
                         }
-                        className="w-full text-xs px-2 py-1.5 rounded border border-slate-300 text-right font-medium"
+                        className="w-full text-xs px-2 py-1.5 rounded border border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-white text-right font-medium"
                       />
                     </div>
 
-                    <div className="w-28 text-right font-bold text-xs text-slate-800">
+                    <div className="w-28 text-right font-bold text-xs text-slate-800 dark:text-slate-200">
                       {formatETB(line.quantity * line.unitCost)}
                     </div>
 
@@ -644,15 +689,15 @@ export default function PurchasesPage() {
           </div>
 
           {/* Grand total callout */}
-          <div className="p-3 bg-slate-100 rounded-lg flex items-center justify-between text-sm">
-            <span className="font-semibold text-slate-700">Estimated PO Total:</span>
-            <span className="text-base font-bold text-[#101827]">
+          <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-between text-sm">
+            <span className="font-semibold text-slate-700 dark:text-slate-200">Estimated PO Total:</span>
+            <span className="text-base font-bold text-[#101827] dark:text-white">
               {formatETB(calculatedTotal)}
             </span>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
               Logistics & Delivery Instructions
             </label>
             <textarea
@@ -660,11 +705,11 @@ export default function PurchasesPage() {
               value={poNotes}
               onChange={(e) => setPONotes(e.target.value)}
               placeholder="e.g. Ship via Ethio-Djibouti Railway cargo to Dire Dawa Station"
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#D9A441]"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#D9A441]"
             />
           </div>
 
-          <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-3">
+          <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">
             <Button
               type="button"
               variant="outline"
@@ -689,6 +734,40 @@ export default function PurchasesPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Delete PO Confirmation Modal */}
+      {poToDelete && (
+        <Modal
+          isOpen={!!poToDelete}
+          onClose={() => setPOToDelete(null)}
+          size="sm"
+          title={`Delete Purchase Order: ${poToDelete.poNumber}`}
+          description="Remove order from PostgreSQL database."
+          footer={
+            <div className="flex items-center justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={() => setPOToDelete(null)}>
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={async () => {
+                  const po = poToDelete;
+                  setPOToDelete(null);
+                  await deletePurchaseOrder(po.id);
+                }}
+              >
+                Delete from Database
+              </Button>
+            </div>
+          }
+        >
+          <p className="text-xs text-slate-600 dark:text-slate-300">
+            Are you sure you want to remove purchase order <strong>{poToDelete.poNumber}</strong> ({poToDelete.supplierName}) from the database?
+            This will permanently remove the PO and its line items.
+          </p>
+        </Modal>
+      )}
     </div>
   );
 }

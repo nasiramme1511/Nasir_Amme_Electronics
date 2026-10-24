@@ -48,35 +48,43 @@ export class PurchaseService {
     const currentYear = new Date().getFullYear();
     const prefix = `PO-${currentYear}-`;
 
-    const lastPo = await tx.purchaseOrder.findFirst({
-      where: {
-        shopId,
-        poNumber: {
-          startsWith: prefix,
+    try {
+      const [seq] = await tx.$queryRaw<{ nextval: bigint }[]>`
+        SELECT nextval('po_number_seq') AS nextval
+      `;
+      return `${prefix}${String(seq.nextval).padStart(4, '0')}`;
+    } catch {
+      const lastPo = await tx.purchaseOrder.findFirst({
+        where: {
+          shopId,
+          poNumber: {
+            startsWith: prefix,
+          },
         },
-      },
-      orderBy: {
-        poNumber: 'desc',
-      },
-      select: {
-        poNumber: true,
-      },
-    });
+        orderBy: {
+          poNumber: 'desc',
+        },
+        select: {
+          poNumber: true,
+        },
+      });
 
-    let nextSequence = 1;
-    if (lastPo?.poNumber) {
-      const parts = lastPo.poNumber.split('-');
-      const num = parseInt(parts[parts.length - 1], 10);
-      if (!isNaN(num)) {
-        nextSequence = num + 1;
+      let nextSequence = 1;
+      if (lastPo?.poNumber) {
+        const parts = lastPo.poNumber.split('-');
+        const num = parseInt(parts[parts.length - 1], 10);
+        if (!isNaN(num)) {
+          nextSequence = num + 1;
+        }
       }
-    }
 
-    return `${prefix}${String(nextSequence).padStart(4, '0')}`;
+      return `${prefix}${String(nextSequence).padStart(4, '0')}`;
+    }
   }
 
   /**
    * Generates a sequential Goods Receipt number: GR-YYYY-XXXX
+   * Uses atomic PostgreSQL sequence generator.
    */
   public static async generateGrNumber(
     shopId: string,
@@ -85,31 +93,38 @@ export class PurchaseService {
     const currentYear = new Date().getFullYear();
     const prefix = `GR-${currentYear}-`;
 
-    const lastGr = await tx.goodsReceipt.findFirst({
-      where: {
-        shopId,
-        receiptNumber: {
-          startsWith: prefix,
+    try {
+      const [seq] = await tx.$queryRaw<{ nextval: bigint }[]>`
+        SELECT nextval('gr_number_seq') AS nextval
+      `;
+      return `${prefix}${String(seq.nextval).padStart(4, '0')}`;
+    } catch {
+      const lastGr = await tx.goodsReceipt.findFirst({
+        where: {
+          shopId,
+          receiptNumber: {
+            startsWith: prefix,
+          },
         },
-      },
-      orderBy: {
-        receiptNumber: 'desc',
-      },
-      select: {
-        receiptNumber: true,
-      },
-    });
+        orderBy: {
+          receiptNumber: 'desc',
+        },
+        select: {
+          receiptNumber: true,
+        },
+      });
 
-    let nextSequence = 1;
-    if (lastGr?.receiptNumber) {
-      const parts = lastGr.receiptNumber.split('-');
-      const num = parseInt(parts[parts.length - 1], 10);
-      if (!isNaN(num)) {
-        nextSequence = num + 1;
+      let nextSequence = 1;
+      if (lastGr?.receiptNumber) {
+        const parts = lastGr.receiptNumber.split('-');
+        const num = parseInt(parts[parts.length - 1], 10);
+        if (!isNaN(num)) {
+          nextSequence = num + 1;
+        }
       }
-    }
 
-    return `${prefix}${String(nextSequence).padStart(4, '0')}`;
+      return `${prefix}${String(nextSequence).padStart(4, '0')}`;
+    }
   }
 
   /**
@@ -229,8 +244,10 @@ export class PurchaseService {
             throw new NotFoundError('Purchase Order', purchaseOrderId);
           }
 
-          if (po.status === 'received' || po.status === 'cancelled') {
-            throw new ValidationError(`Cannot receive goods for a PO with status "${po.status}".`);
+          if (po.status !== 'ordered' && po.status !== 'partially_received') {
+            throw new ValidationError(
+              `Cannot receive goods for a PO with status "${po.status}". Purchase orders must be approved and ordered prior to goods intake.`
+            );
           }
 
           const poItemMap = new Map(po.items.map((i) => [i.id, i]));
@@ -271,12 +288,24 @@ export class PurchaseService {
 
             const effectiveUnitCost = item.unitCost ? new Prisma.Decimal(item.unitCost) : poItem.unitCost;
 
-            // 1. Recalculate Moving Weighted-Average Cost (AVCO)
+            // Proportional allocation of landed additional shipping/freight costs (FIN-05)
+            let allocatedExtraCost = new Prisma.Decimal(0);
+            if (po.additionalCostTotal.gt(0) && po.subtotal.gt(0)) {
+              const lineWeight = poItem.totalCost.div(po.subtotal);
+              const totalLineAdditional = po.additionalCostTotal.mul(lineWeight);
+              allocatedExtraCost = totalLineAdditional
+                .div(poItem.orderedQuantity)
+                .toDecimalPlaces(2, Prisma.Decimal.ROUND_HALF_UP);
+            }
+
+            const landedUnitCost = effectiveUnitCost.add(allocatedExtraCost);
+
+            // 1. Recalculate Moving Weighted-Average Cost (AVCO) including landed freight
             const newAvgCost = CostingService.calculateMovingAverageCost(
               product.onHand,
               product.averageCost,
               item.quantityReceived,
-              effectiveUnitCost
+              landedUnitCost
             );
 
             // 2. Update product average cost in database
@@ -310,6 +339,7 @@ export class PurchaseService {
                 productId: product.id,
                 quantityReceived: item.quantityReceived,
                 unitCost: effectiveUnitCost,
+                allocatedExtraCost,
                 discrepancyNote: item.discrepancyNote,
               },
             });

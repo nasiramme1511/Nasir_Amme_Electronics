@@ -97,7 +97,17 @@ export async function requireRole(
 /**
  * Attaches the HttpOnly session cookie to an outgoing response.
  */
-export function attachSessionCookie(response: NextResponse, token: string, expiresAt: Date): NextResponse {
+export const ROLE_COOKIE_NAME = 'nae_role';
+
+/**
+ * Attaches the HttpOnly session cookie and role cookie to an outgoing response.
+ */
+export function attachSessionCookie(
+  response: NextResponse,
+  token: string,
+  expiresAt: Date,
+  role?: string
+): NextResponse {
   response.cookies.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -105,11 +115,22 @@ export function attachSessionCookie(response: NextResponse, token: string, expir
     expires: expiresAt,
     path: '/',
   });
+
+  if (role) {
+    response.cookies.set(ROLE_COOKIE_NAME, role, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      expires: expiresAt,
+      path: '/',
+    });
+  }
+
   return response;
 }
 
 /**
- * Clears the session cookie on an outgoing response.
+ * Clears session and role cookies on an outgoing response.
  */
 export function clearSessionCookie(response: NextResponse): NextResponse {
   response.cookies.set(COOKIE_NAME, '', {
@@ -119,5 +140,14 @@ export function clearSessionCookie(response: NextResponse): NextResponse {
     expires: new Date(0),
     path: '/',
   });
+
+  response.cookies.set(ROLE_COOKIE_NAME, '', {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    expires: new Date(0),
+    path: '/',
+  });
+
   return response;
 }

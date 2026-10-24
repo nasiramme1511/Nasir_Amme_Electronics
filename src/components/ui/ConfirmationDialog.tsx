@@ -32,20 +32,20 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
     switch (variant) {
       case 'danger':
         return (
-          <div className="w-12 h-12 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 shrink-0">
+          <div className="w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-950/50 border border-rose-100 dark:border-rose-900 flex items-center justify-center text-rose-600 dark:text-rose-400 shrink-0">
             <AlertTriangle className="w-6 h-6" />
           </div>
         );
       case 'warning':
         return (
-          <div className="w-12 h-12 rounded-full bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+          <div className="w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-950/50 border border-amber-100 dark:border-amber-900 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
             <AlertCircle className="w-6 h-6" />
           </div>
         );
       case 'info':
       default:
         return (
-          <div className="w-12 h-12 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+          <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/50 border border-blue-100 dark:border-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
             <Info className="w-6 h-6" />
           </div>
         );
@@ -78,8 +78,8 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
       <div className="flex items-start gap-4 py-2">
         {getIcon()}
         <div>
-          <h4 className="text-base font-semibold text-slate-900">{title}</h4>
-          <p className="text-sm text-slate-600 mt-1.5 leading-relaxed">{message}</p>
+          <h4 className="text-base font-semibold text-slate-900 dark:text-white">{title}</h4>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1.5 leading-relaxed">{message}</p>
         </div>
       </div>
     </Modal>

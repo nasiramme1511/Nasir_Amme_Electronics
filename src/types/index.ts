@@ -12,6 +12,13 @@ export interface Category {
   createdAt: string;
 }
 
+export interface ProductSerialItem {
+  id: string;
+  serialNumber: string;
+  status: 'in_stock' | 'sold' | 'defective' | 'returned';
+  createdAt: string;
+}
+
 export interface Product {
   id: string;
   sku: string;
@@ -28,6 +35,9 @@ export interface Product {
   description: string;
   warrantyMonths?: number;
   imageUrl?: string;
+  createdBy?: string;
+  hasSerials?: boolean;
+  serials?: ProductSerialItem[];
   createdAt: string;
   updatedAt: string;
 }
@@ -60,6 +70,11 @@ export interface Customer {
   creditBalanceETB: number;
   totalSpentETB: number;
   loyaltyPoints: number;
+  priceTier?: 'STANDARD' | 'TIER_1_WHOLESALE' | 'TIER_2_VIP' | 'STAFF' | string;
+  tinNumber?: string;
+  allowCredit?: boolean;
+  creditLimit?: number;
+  paymentTerms?: string;
   notes?: string;
   createdAt: string;
 }
@@ -201,6 +216,8 @@ export interface UserAccount {
   status: 'active' | 'inactive';
   lastActive: string;
   permissions: string[];
+  quickPin?: string;
+  forcePasswordChange?: boolean;
 }
 
 export interface ShopSettings {
@@ -222,6 +239,14 @@ export interface ShopSettings {
   lowStockGlobalThreshold: number;
   barcodeSound: boolean;
   requireCustomerOnSale: boolean;
+  vatNumber?: string;
+  streetKebele?: string;
+  paperWidth?: '80mm' | '58mm';
+  printVatBreakdown?: boolean;
+  printCustomerTin?: boolean;
+  printCashierName?: boolean;
+  preventNegativeStockSales?: boolean;
+  strictBarcodeEnforcement?: boolean;
 }
 
 export interface ToastMessage {

@@ -1,6 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { AuthService } from '../src/services/authService';
 import { PrismaClient } from '@prisma/client';
-import { INITIAL_STAFF_CREDENTIALS } from './provision-passwords';
 
 const prisma = new PrismaClient();
 

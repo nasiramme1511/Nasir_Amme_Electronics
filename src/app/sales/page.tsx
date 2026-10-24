@@ -85,15 +85,15 @@ export default function SalesHistoryPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
               Sales History & Receipts
             </h1>
             <Badge variant="accent" size="sm">
               {sales.length} Transactions
             </Badge>
           </div>
-          <p className="text-sm text-slate-500 mt-1">
-            Browse and reprint thermal receipts issued at the Nasir Amme Electronics checkout counter.
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            View sales transactions and print customer receipts.
           </p>
         </div>
 
@@ -122,28 +122,28 @@ export default function SalesHistoryPage() {
       {/* Summary Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="p-4 border-l-4 border-l-[#101827]">
-          <span className="text-xs text-slate-500 font-semibold uppercase">
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">
             Filtered Total Volume
           </span>
-          <div className="text-xl font-bold text-slate-900 mt-1">
+          <div className="text-xl font-bold text-slate-900 dark:text-white mt-1">
             {formatETB(totalRevenue)}
           </div>
         </Card>
 
         <Card className="p-4 border-l-4 border-l-[#D9A441]">
-          <span className="text-xs text-slate-500 font-semibold uppercase">
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">
             Transactions Count
           </span>
-          <div className="text-xl font-bold text-slate-900 mt-1">
+          <div className="text-xl font-bold text-slate-900 dark:text-white mt-1">
             {filteredSales.length} Receipts
           </div>
         </Card>
 
         <Card className="p-4 border-l-4 border-l-[#16845B]">
-          <span className="text-xs text-slate-500 font-semibold uppercase">
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">
             Average Ticket Size
           </span>
-          <div className="text-xl font-bold text-slate-900 mt-1">
+          <div className="text-xl font-bold text-slate-900 dark:text-white mt-1">
             {formatETB(filteredSales.length > 0 ? totalRevenue / filteredSales.length : 0)}
           </div>
         </Card>
@@ -159,7 +159,7 @@ export default function SalesHistoryPage() {
               placeholder="Search by receipt #, customer name, ref, or cashier..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#D9A441] bg-slate-50/50"
+              className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-[#D9A441] bg-slate-50/50 dark:bg-slate-900/60"
             />
           </div>
 
@@ -167,14 +167,14 @@ export default function SalesHistoryPage() {
             <select
               value={selectedMethod}
               onChange={(e) => setSelectedMethod(e.target.value)}
-              className="text-xs px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#D9A441]"
+              className="text-xs px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#D9A441]"
             >
-              <option value="all">All Payment Methods</option>
-              <option value="telebirr">Telebirr</option>
-              <option value="cbe_birr">CBE Birr</option>
-              <option value="cash">Cash</option>
-              <option value="credit">Credit / Account</option>
-              <option value="bank_transfer">Bank Transfer</option>
+              <option value="all" className="dark:bg-slate-900">All Payment Methods</option>
+              <option value="telebirr" className="dark:bg-slate-900">Telebirr</option>
+              <option value="cbe_birr" className="dark:bg-slate-900">CBE Birr</option>
+              <option value="cash" className="dark:bg-slate-900">Cash</option>
+              <option value="credit" className="dark:bg-slate-900">Credit / Account</option>
+              <option value="bank_transfer" className="dark:bg-slate-900">Bank Transfer</option>
             </select>
           </div>
         </div>
@@ -184,7 +184,7 @@ export default function SalesHistoryPage() {
       <Card>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50/80 text-slate-600 text-xs font-semibold border-b border-slate-200">
+            <thead className="bg-slate-50/80 dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 text-xs font-semibold border-b border-slate-200 dark:border-slate-800">
               <tr>
                 <th className="py-3 px-4">Receipt #</th>
                 <th className="py-3 px-4">Date & Time</th>
@@ -195,25 +195,25 @@ export default function SalesHistoryPage() {
                 <th className="py-3 px-4 text-center">Receipt</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filteredSales.map((sale) => (
-                <tr key={sale.id} className="hover:bg-slate-50/70 transition-colors">
-                  <td className="py-3.5 px-4 font-mono font-semibold text-slate-900 text-xs">
+                <tr key={sale.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+                  <td className="py-3.5 px-4 font-mono font-semibold text-slate-900 dark:text-white text-xs">
                     {sale.receiptNumber}
                   </td>
-                  <td className="py-3.5 px-4 text-xs text-slate-600 whitespace-nowrap">
+                  <td className="py-3.5 px-4 text-xs text-slate-600 dark:text-slate-400 whitespace-nowrap">
                     {formatDate(sale.date)}
                   </td>
                   <td className="py-3.5 px-4">
-                    <div className="font-semibold text-slate-800 text-xs">
+                    <div className="font-semibold text-slate-800 dark:text-slate-200 text-xs">
                       {sale.customerName}
                     </div>
                     <div className="text-[10px] text-slate-400">
                       Cashier: {sale.cashierName}
                     </div>
                   </td>
-                  <td className="py-3.5 px-4 text-center text-xs text-slate-600">
-                    <span className="font-bold text-slate-800">
+                  <td className="py-3.5 px-4 text-center text-xs text-slate-600 dark:text-slate-400">
+                    <span className="font-bold text-slate-800 dark:text-slate-200">
                       {sale.items.reduce((s, i) => s + i.quantity, 0)}
                     </span>{' '}
                     pcs ({sale.items.length} lines)
@@ -234,7 +234,7 @@ export default function SalesHistoryPage() {
                       {sale.paymentMethod.replace('_', ' ').toUpperCase()}
                     </Badge>
                   </td>
-                  <td className="py-3.5 px-4 text-right font-bold text-slate-900">
+                  <td className="py-3.5 px-4 text-right font-bold text-slate-900 dark:text-white">
                     {formatETB(sale.grandTotal)}
                   </td>
                   <td className="py-3.5 px-4 text-center">
@@ -253,7 +253,7 @@ export default function SalesHistoryPage() {
 
               {filteredSales.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-slate-500 text-xs">
+                  <td colSpan={7} className="py-8 text-center text-slate-500 dark:text-slate-400 text-xs">
                     No sales receipts match this query.
                   </td>
                 </tr>

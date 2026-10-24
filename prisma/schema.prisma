@@ -49,8 +49,11 @@ model Shop {
   returns                 SaleReturn[]
   stockMovements          StockMovement[]
   stockCounts             StockCount[]
+  cashSessions            CashSession[]
   auditLogs               AuditLog[]
   idempotencyRecords      IdempotencyRecord[]
+  productSerials          ProductSerial[]
+  passwordResetChallenges PasswordResetChallenge[]
 
   @@map("shops")
 }
@@ -61,17 +64,23 @@ model User {
   fullName     String
   email        String    @unique
   phone        String?
-  passwordHash String
-  status       String    @default("active") // "active", "invited", "suspended", "disabled"
-  lastLoginAt  DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  passwordHash     String
+  quickPinHash     String?   // 4-digit POS station lock
+  twoFactorEnabled Boolean   @default(false)
+  status           String    @default("active") // "active", "invited", "suspended", "disabled"
+  terminalId       String?
+  lastLoginAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   shop         Shop      @relation(fields: [shopId], references: [id], onDelete: Restrict)
   sessions     Session[]
   userRoles    UserRole[]
   sales        Sale[]    @relation("CashierSales")
+  cashSessions CashSession[]
   auditLogs    AuditLog[]
+  stockMovements StockMovement[] @relation("StockMovementActor")
+  passwordResetChallenges PasswordResetChallenge[]
 
   @@index([shopId, status])
   @@map("users")
@@ -156,6 +165,8 @@ model Category {
   slug        String
   description String?
   iconName    String    @default("Shield")
+  posVisible  Boolean   @default(true)
+  displayOrder Int      @default(0)
   status      String    @default("active") // "active", "inactive"
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -178,11 +189,19 @@ model Product {
   sellingPrice       Decimal            @db.Decimal(14, 2)
   averageCost        Decimal            @default(0.00) @db.Decimal(14, 2) // Moving weighted-average cost
   onHand             Int                @default(0) // Fast cached balance; reconciled against stock_movements
+  retailPrice        Decimal?           @db.Decimal(14, 2)
+  costPrice          Decimal?           @default(0.00) @db.Decimal(14, 2)
+  stockQuantity      Int                @default(0)
   reorderLevel       Int                @default(5)
   location           String?            // e.g. "Shelf A-01"
   description        String?
   warrantyMonths     Int                @default(0)
-  status             String             @default("active") // "active", "inactive", "discontinued"
+  imageUrl           String?
+  createdBy          String?
+  hasSerials         Boolean            @default(false)
+  status             String             @default("active") // "active", "inactive", "discontinued", "purged"
+  isArchived         Boolean            @default(false)
+  deletedAt          DateTime?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 
@@ -190,15 +209,36 @@ model Product {
   category           Category           @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   purchaseOrderItems PurchaseOrderItem[]
   goodsReceiptItems  GoodsReceiptItem[]
-  saleItems          SaleItem[]
+  sales              SaleItem[]
   returnItems        SaleReturnItem[]
   stockMovements     StockMovement[]
   stockCountItems    StockCountItem[]
+  serials            ProductSerial[]
 
   @@unique([shopId, sku])
   @@unique([shopId, barcode])
+  @@index([deletedAt, isArchived])
+  @@index([barcode])
+  @@index([sku])
   @@index([shopId, status, categoryId, brand])
   @@map("products")
+}
+
+model ProductSerial {
+  id           String    @id @default(uuid())
+  shopId       String
+  productId    String
+  serialNumber String
+  status       String    @default("in_stock") // "in_stock", "sold", "defective", "returned"
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  shop         Shop      @relation(fields: [shopId], references: [id], onDelete: Restrict)
+  product      Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, serialNumber])
+  @@index([shopId, productId, status])
+  @@map("product_serials")
 }
 
 // -----------------------------------------------------------------------------
@@ -214,8 +254,12 @@ model Supplier {
   email          String?
   phone          String
   city           String          @default("Dire Dawa")
+  cityHub        String?
   addressText    String?
   paymentTerms   String          @default("Net 15") // "Immediate / Cash", "Net 15", "Net 30", "Consignment"
+  tinNumber      String?
+  bankName       String?
+  bankAccount    String?
   status         String          @default("active") // "active", "inactive"
   notes          String?
   createdAt      DateTime        @default(now())
@@ -234,12 +278,16 @@ model Customer {
   displayName   String
   phone         String
   email         String?
-  customerType  String   @default("retail") // "retail", "wholesale"
+  customerType  String   @default("retail") // "retail", "wholesale", "corporate", "repair_clinic"
+  priceTier     String   @default("standard") // "standard", "tier_1_wholesale", "tier_2_vip", "staff"
   city          String   @default("Dire Dawa")
   addressText   String?
+  allowCredit   Boolean  @default(false)
+  creditLimit   Decimal  @default(0.00) @db.Decimal(14, 2)
   creditBalance Decimal  @default(0.00) @db.Decimal(14, 2)
   totalSpent    Decimal  @default(0.00) @db.Decimal(14, 2)
   loyaltyPoints Int      @default(0)
+  tinNumber     String?
   notes         String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -385,12 +433,14 @@ model SaleItem {
   lineSubtotal     Decimal          @db.Decimal(14, 2)
   lineTotal        Decimal          @db.Decimal(14, 2)
   lineCogs         Decimal          @db.Decimal(14, 2) // quantity * unitCostSnapshot
-  lineGrossProfit  Decimal          @db.Decimal(14, 2) // lineTotal - lineCogs
-  createdAt        DateTime         @default(now())
+  lineGrossProfit        Decimal          @db.Decimal(14, 2) // lineTotal - lineCogs
+  warrantyMonthsSnapshot Int              @default(0) // Frozen warranty period in months at checkout
+  warrantyExpiresAt      DateTime?        // Authoritative warranty expiration date
+  createdAt              DateTime         @default(now())
 
-  sale             Sale             @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  product          Product          @relation(fields: [productId], references: [id], onDelete: Restrict)
-  returnItems      SaleReturnItem[]
+  sale                   Sale             @relation(fields: [saleId], references: [id], onDelete: Restrict)
+  product                Product          @relation(fields: [productId], references: [id], onDelete: Restrict)
+  returnItems            SaleReturnItem[]
 
   @@index([saleId])
   @@index([productId, saleId])
@@ -398,25 +448,59 @@ model SaleItem {
 }
 
 model Payment {
-  id                String   @id @default(uuid())
+  id                String       @id @default(uuid())
   shopId            String
   saleId            String
-  method            String   // "cash", "telebirr", "cbe_birr", "bank_transfer", "credit"
-  status            String   @default("succeeded") // "pending", "succeeded", "failed", "refunded", "partially_refunded"
-  amount            Decimal  @db.Decimal(14, 2)
-  amountTendered    Decimal? @db.Decimal(14, 2) // For cash transactions
-  changeGiven       Decimal? @db.Decimal(14, 2) // Tendered - amount
-  currencyCode      String   @default("ETB")
-  providerReference String?  // Telebirr transaction code or CBE Birr FT reference
-  receivedAt        DateTime @default(now())
+  cashSessionId     String?
+  method            String       // "cash", "telebirr", "cbe_birr", "bank_transfer", "credit"
+  status            String       @default("succeeded") // "pending", "succeeded", "failed", "refunded", "partially_refunded"
+  amount            Decimal      @db.Decimal(14, 2)
+  amountTendered    Decimal?     @db.Decimal(14, 2) // For cash transactions
+  changeGiven       Decimal?     @db.Decimal(14, 2) // Tendered - amount
+  currencyCode      String       @default("ETB")
+  providerReference String?      // Telebirr transaction code or CBE Birr FT reference
+  receivedAt        DateTime     @default(now())
   recordedBy        String
-  createdAt         DateTime @default(now())
+  createdAt         DateTime     @default(now())
 
-  shop              Shop     @relation(fields: [shopId], references: [id], onDelete: Restrict)
-  sale              Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  shop              Shop         @relation(fields: [shopId], references: [id], onDelete: Restrict)
+  sale              Sale         @relation(fields: [saleId], references: [id], onDelete: Restrict)
+  cashSession       CashSession? @relation(fields: [cashSessionId], references: [id], onDelete: SetNull)
 
   @@index([shopId, saleId])
+  @@index([shopId, cashSessionId])
   @@map("payments")
+}
+
+model CashSession {
+  id                 String    @id @default(uuid())
+  shopId             String
+  cashierId          String
+  sessionNumber      String    // Format: CS-YYYYMMDD-XXXX
+  status             String    @default("open") // "open", "closed", "reconciled"
+  openedAt           DateTime  @default(now())
+  closedAt           DateTime?
+  openingFloat       Decimal   @default(0.00) @db.Decimal(14, 2)
+  closingCashCounted Decimal?  @db.Decimal(14, 2)
+  expectedCash       Decimal   @default(0.00) @db.Decimal(14, 2)
+  cashDifference     Decimal   @default(0.00) @db.Decimal(14, 2)
+  totalSalesCash     Decimal   @default(0.00) @db.Decimal(14, 2)
+  totalRefundsCash   Decimal   @default(0.00) @db.Decimal(14, 2)
+  totalTelebirr      Decimal   @default(0.00) @db.Decimal(14, 2)
+  totalCbeBirr       Decimal   @default(0.00) @db.Decimal(14, 2)
+  totalOther         Decimal   @default(0.00) @db.Decimal(14, 2)
+  notes              String?
+  closedBy           String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  shop               Shop      @relation(fields: [shopId], references: [id], onDelete: Restrict)
+  cashier            User      @relation(fields: [cashierId], references: [id], onDelete: Restrict)
+  payments           Payment[]
+
+  @@unique([shopId, sessionNumber])
+  @@index([shopId, cashierId, status])
+  @@map("cash_sessions")
 }
 
 // -----------------------------------------------------------------------------
@@ -495,6 +579,7 @@ model StockMovement {
 
   shop                 Shop     @relation(fields: [shopId], references: [id], onDelete: Restrict)
   product              Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  actor                User?    @relation("StockMovementActor", fields: [actorId], references: [id], onDelete: SetNull)
 
   @@index([shopId, productId, occurredAt])
   @@index([shopId, referenceNumber])
@@ -586,4 +671,38 @@ model IdempotencyRecord {
 
   @@unique([shopId, operation, idempotencyKey])
   @@map("idempotency_records")
+}
+
+// -----------------------------------------------------------------------------
+// 10. Cryptographic Password Reset & OTP Challenges
+// -----------------------------------------------------------------------------
+
+model PasswordResetChallenge {
+  id                  String    @id @default(uuid())
+  userId              String
+  shopId              String
+  otpHash             String    // HMAC-SHA256 digest of 6-digit OTP
+  resetTokenHash      String?   @unique // HMAC-SHA256 digest of single-use reset authorization token
+  status              String    @default("PENDING") // "PENDING", "VERIFIED", "CONSUMED", "EXPIRED", "REVOKED"
+  attempts            Int       @default(0)
+  maxAttempts         Int       @default(3)
+  expiresAt           DateTime  // 15-minute TTL
+  resetTokenExpiresAt DateTime? // 5-minute TTL once verified
+  dispatchedAt        DateTime  @default(now())
+  consumedAt          DateTime?
+  revokedAt           DateTime?
+  dispatchChannel     String    @default("SMS_ETHIO_TELECOM") // "SMS_ETHIO_TELECOM", "IN_STORE_ADMIN"
+  recipientMasked     String?   // "+251 9*** ***637"
+  ipAddress           String?
+  userAgent           String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shop                Shop      @relation(fields: [shopId], references: [id], onDelete: Restrict)
+
+  @@index([userId, status])
+  @@index([otpHash, status])
+  @@index([expiresAt])
+  @@map("password_reset_challenges")
 }

@@ -3,10 +3,20 @@ import { prisma } from '@/lib/prisma';
 import { jsonSuccess, jsonError, DEFAULT_SHOP_ID } from '@/lib/apiHelper';
 import { PurchaseService } from '@/services/purchaseService';
 import { requireAuth, requirePermission } from '@/lib/authGuard';
+import { ForbiddenError } from '@/lib/errors';
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAuth(request);
+    const auth = await requireAuth(request);
+    const hasPurchasePermission =
+      auth.roles.includes('admin') ||
+      auth.permissions.some((p) =>
+        ['purchases.create', 'purchases.approve', 'purchases.receive', 'purchases.view'].includes(p)
+      );
+
+    if (!hasPurchasePermission) {
+      throw new ForbiddenError('Access denied. Role lacks purchasing permissions.');
+    }
 
     const orders = await prisma.purchaseOrder.findMany({
       where: {
@@ -49,7 +59,7 @@ export async function POST(request: NextRequest) {
       items,
       notes,
       expectedAt,
-      createdBy: auth.user.fullName,
+      createdBy: auth?.user?.fullName || 'Manager',
     });
 
     return jsonSuccess(po, 201);

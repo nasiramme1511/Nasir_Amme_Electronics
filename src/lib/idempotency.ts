@@ -33,6 +33,9 @@ export async function withIdempotency<T>(
     .update(JSON.stringify(payload))
     .digest('hex');
 
+  const expiresAt = new Date(Date.now() + ttlHours * 60 * 60 * 1000);
+
+  // 1. Check if already completed and return immediately
   const existingRecord = await prisma.idempotencyRecord.findUnique({
     where: {
       shopId_operation_idempotencyKey: {
@@ -52,31 +55,43 @@ export async function withIdempotency<T>(
     }
   }
 
-  const expiresAt = new Date(Date.now() + ttlHours * 60 * 60 * 1000);
-
-  // Claim the idempotency record
-  await prisma.idempotencyRecord.upsert({
-    where: {
-      shopId_operation_idempotencyKey: {
+  // 2. Claim the idempotency record atomically via insert
+  try {
+    await prisma.idempotencyRecord.create({
+      data: {
         shopId,
         operation,
         idempotencyKey: normalizedKey,
+        requestHash,
+        status: 'processing',
+        expiresAt,
       },
-    },
-    update: {
-      status: 'processing',
-      requestHash,
-      expiresAt,
-    },
-    create: {
-      shopId,
-      operation,
-      idempotencyKey: normalizedKey,
-      requestHash,
-      status: 'processing',
-      expiresAt,
-    },
-  });
+    });
+  } catch (err: unknown) {
+    if (
+      err &&
+      typeof err === 'object' &&
+      'code' in err &&
+      err.code === 'P2002'
+    ) {
+      // Caught race condition where another concurrent worker claimed the key first
+      const concurrentRecord = await prisma.idempotencyRecord.findUnique({
+        where: {
+          shopId_operation_idempotencyKey: {
+            shopId,
+            operation,
+            idempotencyKey: normalizedKey,
+          },
+        },
+      });
+
+      if (concurrentRecord?.status === 'completed' && concurrentRecord.responseJson !== null) {
+        return concurrentRecord.responseJson as unknown as T;
+      }
+      throw new IdempotencyConflictError(normalizedKey);
+    }
+    throw err;
+  }
 
   try {
     const result = await operationFn();

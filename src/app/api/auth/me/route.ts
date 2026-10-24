@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
-import { requireAuth } from '@/lib/authGuard';
+import { requireAuth, ROLE_COOKIE_NAME } from '@/lib/authGuard';
+import { COOKIE_NAME } from '@/services/authService';
 import { jsonSuccess, jsonError } from '@/lib/apiHelper';
 
 export async function GET(request: NextRequest) {
@@ -12,6 +13,9 @@ export async function GET(request: NextRequest) {
       permissions: auth.permissions,
     });
   } catch (error) {
-    return jsonError(error);
+    const res = jsonError(error);
+    res.cookies.delete(COOKIE_NAME);
+    res.cookies.delete(ROLE_COOKIE_NAME);
+    return res;
   }
 }

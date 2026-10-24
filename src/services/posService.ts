@@ -1,20 +1,35 @@
 import { prisma } from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
+import { Prisma, Product } from '@prisma/client';
 import {
   ValidationError,
   NotFoundError,
   InsufficientStockError,
 } from '@/lib/errors';
+import { revalidatePath } from 'next/cache';
 import { InventoryService } from './inventoryService';
 import { CostingService } from './costingService';
 import { AuditService } from './auditService';
+import { AuthService } from './authService';
 import { withIdempotency } from '@/lib/idempotency';
+
+export function revalidateInventoryRoutes() {
+  try {
+    revalidatePath('/admin/dashboard');
+  } catch {}
+  try {
+    revalidatePath('/inventory/dashboard');
+  } catch {}
+  try {
+    revalidatePath('/inventory/movements');
+  } catch {}
+}
 
 export interface CheckoutLineItemInput {
   productId: string;
   quantity: number;
   unitPrice?: number; // Optional override; server validates against product price
   discountAmount?: number;
+  serialNumbers?: string[]; // Serial numbers / IMEIs if serialized item
 }
 
 export interface CheckoutPaymentInput {
@@ -33,11 +48,13 @@ export interface CheckoutOrderInput {
   discountTotal?: number;
   notes?: string;
   idempotencyKey?: string;
+  managerPin?: string; // Four-Eyes manager PIN for discounts and price overrides
 }
 
 export class PosService {
   /**
    * Generates a sequential, audit-compliant receipt number: REC-YYYY-XXXX
+   * Uses atomic PostgreSQL sequence generator to prevent race condition duplicates.
    */
   public static async generateReceiptNumber(
     shopId: string,
@@ -46,31 +63,38 @@ export class PosService {
     const currentYear = new Date().getFullYear();
     const prefix = `REC-${currentYear}-`;
 
-    const lastSale = await tx.sale.findFirst({
-      where: {
-        shopId,
-        receiptNumber: {
-          startsWith: prefix,
+    try {
+      const [seq] = await tx.$queryRaw<{ nextval: bigint }[]>`
+        SELECT nextval('receipt_number_seq') AS nextval
+      `;
+      return `${prefix}${String(seq.nextval).padStart(4, '0')}`;
+    } catch {
+      const lastSale = await tx.sale.findFirst({
+        where: {
+          shopId,
+          receiptNumber: {
+            startsWith: prefix,
+          },
         },
-      },
-      orderBy: {
-        receiptNumber: 'desc',
-      },
-      select: {
-        receiptNumber: true,
-      },
-    });
+        orderBy: {
+          receiptNumber: 'desc',
+        },
+        select: {
+          receiptNumber: true,
+        },
+      });
 
-    let nextSequence = 1;
-    if (lastSale?.receiptNumber) {
-      const parts = lastSale.receiptNumber.split('-');
-      const num = parseInt(parts[parts.length - 1], 10);
-      if (!isNaN(num)) {
-        nextSequence = num + 1;
+      let nextSequence = 1;
+      if (lastSale?.receiptNumber) {
+        const parts = lastSale.receiptNumber.split('-');
+        const num = parseInt(parts[parts.length - 1], 10);
+        if (!isNaN(num)) {
+          nextSequence = num + 1;
+        }
       }
-    }
 
-    return `${prefix}${String(nextSequence).padStart(4, '0')}`;
+      return `${prefix}${String(nextSequence).padStart(4, '0')}`;
+    }
   }
 
   /**
@@ -89,7 +113,7 @@ export class PosService {
       throw new ValidationError('At least one payment tender is required.');
     }
 
-    return await withIdempotency(
+    const saleResult = await withIdempotency(
       {
         shopId,
         operation: 'checkout',
@@ -111,13 +135,14 @@ export class PosService {
           // 3. Deterministic order of product IDs to prevent deadlocks
           const sortedProductIds = [...new Set(items.map((i) => i.productId))].sort();
 
-          // Fetch products in deterministic order
-          const products = await tx.product.findMany({
-            where: {
-              id: { in: sortedProductIds },
-              shopId,
-            },
-          });
+          // Fetch products in deterministic order with row-level pessimistic locking (FOR UPDATE)
+          const products = await tx.$queryRaw<Product[]>`
+            SELECT * FROM "products"
+            WHERE "id" IN (${Prisma.join(sortedProductIds)})
+              AND "shopId" = ${shopId}
+            ORDER BY "id" ASC
+            FOR UPDATE
+          `;
 
           if (products.length !== sortedProductIds.length) {
             throw new ValidationError('One or more product IDs are invalid or belong to another store.');
@@ -145,6 +170,19 @@ export class PosService {
               throw new InsufficientStockError(product.name, item.quantity, product.onHand);
             }
 
+            // Serialized inventory custody check
+            if (product.hasSerials) {
+              if (!item.serialNumbers || item.serialNumbers.length !== item.quantity) {
+                throw new ValidationError(
+                  `Serialized custody item "${product.name}" requires exactly ${item.quantity} scanned serial number(s) or IMEI(s).`
+                );
+              }
+              const uniqueSerials = new Set(item.serialNumbers);
+              if (uniqueSerials.size !== item.serialNumbers.length) {
+                throw new ValidationError(`Duplicate serial numbers provided for "${product.name}".`);
+              }
+            }
+
             // Authoritative selling price from database
             const unitPrice = new Prisma.Decimal(item.unitPrice ?? product.sellingPrice);
             const lineSubtotal = unitPrice.mul(item.quantity);
@@ -169,11 +207,37 @@ export class PosService {
               lineTotal,
               lineCogs,
               lineGrossProfit,
+              serialNumbers: item.serialNumbers,
             };
           });
 
           const headerDiscount = new Prisma.Decimal(input.discountTotal ?? 0);
           const totalDiscount = calculatedLineDiscountTotal.add(headerDiscount);
+
+          // Four-Eyes Principle: Manager PIN Override enforcement for discounts or price reductions
+          const hasDiscountOrOverride = totalDiscount.gt(0) || computedItems.some((ci) => ci.unitPrice.lt(ci.product.sellingPrice));
+          if (hasDiscountOrOverride) {
+            const cashierRoles = await tx.userRole.findMany({
+              where: { userId: cashierId },
+              include: { role: true },
+            });
+            const isManagerOrAdmin = cashierRoles.some((r) => ['admin', 'manager'].includes(r.role.code));
+
+            if (!isManagerOrAdmin) {
+              if (!input.managerPin) {
+                throw new ValidationError(
+                  'Four-Eyes Principle Enforcement: Manager or Admin PIN authorization is required to apply discounts or price overrides.'
+                );
+              }
+              const verification = await AuthService.verifyManagerPin(shopId, input.managerPin);
+              if (!verification.authorized) {
+                throw new ValidationError(
+                  'Four-Eyes Authorization Failed: Invalid Manager or Admin PIN.'
+                );
+              }
+            }
+          }
+
           const netTaxable = calculatedSubtotal.sub(totalDiscount);
 
           let calculatedTax = new Prisma.Decimal(0);
@@ -233,6 +297,11 @@ export class PosService {
 
           // 8. Insert SaleItems and update stock + ledger
           for (const item of computedItems) {
+            const warrantyMonths = item.product.warrantyMonths ?? 0;
+            const warrantyExpiresAt = warrantyMonths > 0
+              ? new Date(Date.now() + warrantyMonths * 30 * 24 * 60 * 60 * 1000)
+              : null;
+
             await tx.saleItem.create({
               data: {
                 saleId: sale.id,
@@ -247,8 +316,39 @@ export class PosService {
                 lineTotal: item.lineTotal,
                 lineCogs: item.lineCogs,
                 lineGrossProfit: item.lineGrossProfit,
+                warrantyMonthsSnapshot: warrantyMonths,
+                warrantyExpiresAt,
               },
             });
+
+            // Serialized custody update: transition serial status from 'in_stock' to 'sold'
+            if (item.product.hasSerials && item.serialNumbers && item.serialNumbers.length > 0) {
+              for (const sn of item.serialNumbers) {
+                const serialRec = await tx.productSerial.findFirst({
+                  where: {
+                    shopId,
+                    productId: item.product.id,
+                    serialNumber: sn,
+                    status: 'in_stock',
+                  },
+                });
+
+                if (!serialRec) {
+                  throw new ValidationError(
+                    `Serial / IMEI "${sn}" for product "${item.product.name}" is not in stock or does not exist.`
+                  );
+                }
+
+                await tx.productSerial.update({
+                  where: { id: serialRec.id },
+                  data: { status: 'sold' },
+                });
+              }
+            }
+
+            const movementNotes = item.serialNumbers && item.serialNumbers.length > 0
+              ? `POS Retail Checkout (IMEI/Serial: ${item.serialNumbers.join(', ')})`
+              : 'POS Retail Checkout';
 
             // Decrement stock and record immutable stock movement
             await InventoryService.recordMovement(tx, {
@@ -259,10 +359,16 @@ export class PosService {
               referenceNumber: receiptNumber,
               sourceType: 'sale',
               sourceId: sale.id,
-              reason: 'POS Retail Checkout',
+              reason: movementNotes,
+              notes: movementNotes,
               actorId: cashierId,
             });
           }
+
+          // Look up active cashier cash session if one is currently open
+          const activeSession = await tx.cashSession.findFirst({
+            where: { shopId, cashierId, status: 'open' },
+          });
 
           // 9. Insert Payments
           for (const pay of payments) {
@@ -274,6 +380,7 @@ export class PosService {
               data: {
                 shopId,
                 saleId: sale.id,
+                cashSessionId: activeSession ? activeSession.id : null,
                 method: pay.method,
                 status: 'succeeded',
                 amount: payAmount,
@@ -340,5 +447,9 @@ export class PosService {
         });
       }
     );
+
+    revalidateInventoryRoutes();
+
+    return saleResult;
   }
 }

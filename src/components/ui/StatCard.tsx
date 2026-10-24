@@ -13,7 +13,6 @@ export interface StatCardProps {
     label?: string;
   };
   indicatorColor?: 'primary' | 'accent' | 'success' | 'warning' | 'danger';
-  isDemo?: boolean;
 }
 
 export const StatCard: React.FC<StatCardProps> = ({
@@ -23,49 +22,46 @@ export const StatCard: React.FC<StatCardProps> = ({
   icon,
   trend,
   indicatorColor = 'primary',
-  isDemo = true,
 }) => {
   const colorMap = {
-    primary: 'bg-[#101827]/5 text-[#101827] border-[#101827]/10',
-    accent: 'bg-[#D9A441]/10 text-[#93660a] border-[#D9A441]/30',
-    success: 'bg-[#16845B]/10 text-[#16845B] border-[#16845B]/20',
-    warning: 'bg-amber-50 text-amber-700 border-amber-200',
-    danger: 'bg-rose-50 text-rose-600 border-rose-200',
+    primary:
+      'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700',
+    accent:
+      'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800/60',
+    success:
+      'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60',
+    warning:
+      'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+    danger:
+      'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800/60',
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow relative">
+    <Card className="hover:shadow-md dark:hover:border-slate-700 transition-all duration-200 relative group">
       <div className="p-5">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                {title}
-              </span>
-              {isDemo && (
-                <span className="text-[10px] uppercase font-mono px-1.5 py-0.2 bg-slate-100 text-slate-500 rounded border border-slate-200">
-                  Demo
-                </span>
-              )}
-            </div>
-            <div className="text-2xl font-bold text-[#101827] mt-1.5 tracking-tight">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              {title}
+            </span>
+            <div className="text-2xl font-black text-slate-900 dark:text-white mt-1.5 tracking-tight">
               {value}
             </div>
           </div>
 
           <div
-            className={`w-11 h-11 rounded-xl flex items-center justify-center border shrink-0 ${colorMap[indicatorColor]}`}
+            className={`w-11 h-11 rounded-xl flex items-center justify-center border shrink-0 transition-transform group-hover:scale-105 ${colorMap[indicatorColor]}`}
           >
             {icon}
           </div>
         </div>
 
         {(subtitle || trend) && (
-          <div className="mt-3.5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+          <div className="mt-3.5 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs">
             {trend && (
               <span
-                className={`inline-flex items-center font-medium gap-0.5 ${
-                  trend.isPositive ? 'text-[#16845B]' : 'text-rose-600'
+                className={`inline-flex items-center font-bold gap-0.5 ${
+                  trend.isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
                 }`}
               >
                 {trend.isPositive ? (
@@ -75,14 +71,14 @@ export const StatCard: React.FC<StatCardProps> = ({
                 )}
                 <span>{trend.value}</span>
                 {trend.label && (
-                  <span className="text-slate-400 font-normal ml-1">
+                  <span className="text-slate-400 dark:text-slate-500 font-normal ml-1">
                     {trend.label}
                   </span>
                 )}
               </span>
             )}
             {subtitle && (
-              <span className="text-slate-500 text-[11px] truncate">{subtitle}</span>
+              <span className="text-slate-500 dark:text-slate-400 text-[11px] truncate">{subtitle}</span>
             )}
           </div>
         )}

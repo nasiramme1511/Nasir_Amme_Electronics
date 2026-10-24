@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { NotFoundError, ValidationError, InsufficientStockError } from '@/lib/errors';
+import { revalidatePath } from 'next/cache';
 import { AuditService } from './auditService';
 
 export interface RecordMovementParams {
@@ -59,12 +60,16 @@ export class InventoryService {
       idempotencyKey,
     } = params;
 
-    // Fetch the product inside the transaction
-    const product = await tx.product.findUnique({
-      where: { id: productId },
-    });
+    // Fetch the product inside the transaction with pessimistic row lock (FOR UPDATE)
+    const products = await tx.$queryRaw<Array<{ id: string; shopId: string; name: string; onHand: number; averageCost: Prisma.Decimal }>>`
+      SELECT "id", "shopId", "name", "onHand", "averageCost"
+      FROM "products"
+      WHERE "id" = ${productId} AND "shopId" = ${shopId}
+      FOR UPDATE
+    `;
 
-    if (!product || product.shopId !== shopId) {
+    const product = products[0];
+    if (!product) {
       throw new NotFoundError('Product', productId);
     }
 
@@ -128,7 +133,7 @@ export class InventoryService {
       throw new ValidationError('A reason must be provided for manual stock corrections.');
     }
 
-    return await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       const product = await tx.product.findUnique({
         where: { id: productId },
       });
@@ -182,6 +187,18 @@ export class InventoryService {
         movementId,
       };
     });
+
+    try {
+      revalidatePath('/admin/dashboard');
+    } catch {}
+    try {
+      revalidatePath('/inventory/dashboard');
+    } catch {}
+    try {
+      revalidatePath('/inventory/movements');
+    } catch {}
+
+    return result;
   }
 
   /**
@@ -217,5 +234,38 @@ export class InventoryService {
       ledgerComputed,
       isBalanced: onHandCached === ledgerComputed,
     };
+  }
+
+  /**
+   * Reconciles and synchronizes product onHand to match the immutable stock movement ledger.
+   */
+  public static async syncProductBalanceToLedger(
+    shopId: string,
+    productId: string
+  ): Promise<{ onHandBefore: number; onHandAfter: number }> {
+    return await prisma.$transaction(async (tx) => {
+      const [product] = await tx.$queryRaw<Array<{ id: string; name: string; onHand: number }>>`
+        SELECT "id", "name", "onHand" FROM "products"
+        WHERE "id" = ${productId} AND "shopId" = ${shopId}
+        FOR UPDATE
+      `;
+      if (!product) throw new NotFoundError('Product', productId);
+
+      const aggregations = await tx.stockMovement.aggregate({
+        where: { shopId, productId },
+        _sum: { quantityDelta: true },
+      });
+
+      const ledgerSum = aggregations._sum.quantityDelta ?? 0;
+      await tx.product.update({
+        where: { id: productId },
+        data: { onHand: ledgerSum },
+      });
+
+      return {
+        onHandBefore: product.onHand,
+        onHandAfter: ledgerSum,
+      };
+    });
   }
 }

@@ -100,3 +100,15 @@ export function generateSKU(prefix: string = 'ELE'): string {
 export function generateId(prefix: string = 'id'): string {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`;
 }
+
+export function calculatePercentageChange(current: number, previous: number): number | null {
+  if (previous === 0) return null;
+  return Number((((current - previous) / previous) * 100).toFixed(1));
+}
+
+export function formatPercentageChange(delta: number | null): string {
+  if (delta === null || isNaN(delta)) return 'N/A';
+  const prefix = delta > 0 ? '+' : '';
+  return `${prefix}${delta.toFixed(1)}%`;
+}
+

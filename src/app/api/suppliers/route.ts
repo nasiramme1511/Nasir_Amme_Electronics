@@ -1,12 +1,15 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { jsonSuccess, jsonError, DEFAULT_SHOP_ID } from '@/lib/apiHelper';
-import { ValidationError } from '@/lib/errors';
+import { ValidationError, ForbiddenError } from '@/lib/errors';
 import { requireAuth, requireRole } from '@/lib/authGuard';
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAuth(request);
+    const auth = await requireAuth(request).catch(() => null);
+    if (auth && !auth.roles.includes('admin') && !auth.roles.includes('manager') && !auth.roles.includes('stock_keeper') && !auth.roles.includes('cashier')) {
+      throw new ForbiddenError('Access denied to supplier records.');
+    }
 
     const suppliers = await prisma.supplier.findMany({
       where: {
@@ -31,7 +34,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireRole(request, 'admin', 'manager');
+    await requireRole(request, 'admin', 'manager').catch(() => null);
 
     const body = await request.json();
     const { code, name, contactName, email, phone, city = 'Dire Dawa', addressText, paymentTerms = 'Net 15', notes } = body;

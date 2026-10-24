@@ -1,13 +1,16 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { jsonSuccess, jsonError, DEFAULT_SHOP_ID } from '@/lib/apiHelper';
-import { NotFoundError } from '@/lib/errors';
+import { NotFoundError, ForbiddenError } from '@/lib/errors';
 import { Prisma } from '@prisma/client';
 import { requireAuth, requirePermission } from '@/lib/authGuard';
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAuth(request);
+    const auth = await requireAuth(request);
+    if (!auth.roles.includes('admin')) {
+      throw new ForbiddenError('Only Administrators can view or manage business settings.');
+    }
 
     const shop = await prisma.shop.findUnique({
       where: { id: DEFAULT_SHOP_ID },
@@ -24,6 +27,9 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const auth = await requirePermission(request, 'settings.manage');
+    if (!auth.roles.includes('admin')) {
+      throw new ForbiddenError('Only Administrators can modify shop settings.');
+    }
 
     const body = await request.json();
     const {

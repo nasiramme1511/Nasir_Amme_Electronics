@@ -6,12 +6,22 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:rbac": "tsx scripts/test-rbac.ts",
+    "test:dashboard": "tsx scripts/test-dashboard-upgrade.ts",
+    "test:audit": "tsx scripts/test-audit-integrity.ts",
+    "test:inventory-sync": "tsx scripts/test-inventory-sync.ts",
+    "test:purge": "tsx scripts/test-product-purge-engine.ts",
+    "test:recovery": "tsx scripts/test-security-recovery.ts",
+    "admin:reset": "tsx scripts/reset-admin-password.ts",
+    "db:migrate-local": "bash scripts/migrate-to-local-pgadmin.sh",
+    "db:restore-neon": "bash scripts/restore-neon.sh"
   },
   "dependencies": {
     "@neon/config": "^1.9.1",
     "@neon/env": "^1.6.2",
     "@prisma/client": "^6.19.3",
+    "argon2": "^0.45.1",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "lucide-react": "^1.57.0",
@@ -20,7 +30,8 @@
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "recharts": "^3.10.1",
-    "tailwind-merge": "^3.7.0"
+    "tailwind-merge": "^3.7.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",

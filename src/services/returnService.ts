@@ -38,31 +38,38 @@ export class ReturnService {
     const currentYear = new Date().getFullYear();
     const prefix = `RET-${currentYear}-`;
 
-    const lastReturn = await tx.saleReturn.findFirst({
-      where: {
-        shopId,
-        returnNumber: {
-          startsWith: prefix,
+    try {
+      const [seq] = await tx.$queryRaw<{ nextval: bigint }[]>`
+        SELECT nextval('return_number_seq') AS nextval
+      `;
+      return `${prefix}${String(seq.nextval).padStart(4, '0')}`;
+    } catch {
+      const lastReturn = await tx.saleReturn.findFirst({
+        where: {
+          shopId,
+          returnNumber: {
+            startsWith: prefix,
+          },
         },
-      },
-      orderBy: {
-        returnNumber: 'desc',
-      },
-      select: {
-        returnNumber: true,
-      },
-    });
+        orderBy: {
+          returnNumber: 'desc',
+        },
+        select: {
+          returnNumber: true,
+        },
+      });
 
-    let nextSequence = 1;
-    if (lastReturn?.returnNumber) {
-      const parts = lastReturn.returnNumber.split('-');
-      const num = parseInt(parts[parts.length - 1], 10);
-      if (!isNaN(num)) {
-        nextSequence = num + 1;
+      let nextSequence = 1;
+      if (lastReturn?.returnNumber) {
+        const parts = lastReturn.returnNumber.split('-');
+        const num = parseInt(parts[parts.length - 1], 10);
+        if (!isNaN(num)) {
+          nextSequence = num + 1;
+        }
       }
-    }
 
-    return `${prefix}${String(nextSequence).padStart(4, '0')}`;
+      return `${prefix}${String(nextSequence).padStart(4, '0')}`;
+    }
   }
 
   /**
@@ -86,13 +93,14 @@ export class ReturnService {
       },
       async () => {
         return await prisma.$transaction(async (tx) => {
-          // 1. Fetch sale with line items and previous returns
+          // 1. Fetch sale with line items, payments, and previous returns
           const sale = await tx.sale.findUnique({
             where: { id: saleId },
             include: {
               items: {
                 include: { product: true },
               },
+              payments: true,
               returns: {
                 where: { status: 'posted' },
                 include: { items: true },
@@ -213,7 +221,46 @@ export class ReturnService {
             },
           });
 
-          // 6. Evaluate if the original sale is now 100% returned or partially returned
+          // 6. Look up active cashier cash session for till drawer balancing
+          const activeSession = await tx.cashSession.findFirst({
+            where: { shopId, status: 'open' },
+            orderBy: { openedAt: 'desc' },
+          });
+
+          // Insert compensating refund Payment outflow record (FIN-03)
+          await tx.payment.create({
+            data: {
+              shopId,
+              saleId: sale.id,
+              cashSessionId: activeSession?.id ?? null,
+              method: refundMethod === 'original_method' ? (sale.payments[0]?.method ?? 'cash') : refundMethod,
+              status: 'refunded',
+              amount: totalRefundETB.negated(), // Negative amount representing cash/fund outflow
+              currencyCode: 'ETB',
+              providerReference: `REFUND-${returnNumber}`,
+              recordedBy: postedBy,
+            },
+          });
+
+          // Reverse customer statistics if customer is linked to original sale (FIN-04)
+          if (sale.customerId) {
+            const customer = await tx.customer.findUnique({ where: { id: sale.customerId } });
+            if (customer && customer.shopId === shopId) {
+              const updatedSpent = customer.totalSpent.sub(totalRefundETB);
+              const pointsToDeduct = Math.floor(totalRefundETB.toNumber() / 100);
+              const updatedPoints = Math.max(0, customer.loyaltyPoints - pointsToDeduct);
+
+              await tx.customer.update({
+                where: { id: sale.customerId },
+                data: {
+                  totalSpent: updatedSpent.gte(0) ? updatedSpent : new Prisma.Decimal(0),
+                  loyaltyPoints: updatedPoints,
+                },
+              });
+            }
+          }
+
+          // 7. Evaluate if the original sale is now 100% returned or partially returned
           const allFullyReturned = sale.items.every((line) => {
             const totalReturnedForLine = priorReturnsMap.get(line.id) ?? 0;
             return totalReturnedForLine >= line.quantity;

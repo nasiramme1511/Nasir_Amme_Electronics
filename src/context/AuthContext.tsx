@@ -21,6 +21,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   hasPermission: (code: string) => boolean;
   hasRole: (...roles: string[]) => boolean;
 }
@@ -33,7 +34,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const router = useRouter();
   const pathname = usePathname();
 
-  const fetchCurrentUser = useCallback(async () => {
+  const refreshUser = useCallback(async () => {
     try {
       const res = await fetch('/api/auth/me');
       if (res.ok) {
@@ -52,8 +53,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
-    fetchCurrentUser();
-  }, [fetchCurrentUser]);
+    let isMounted = true;
+    fetch('/api/auth/me')
+      .then((res) => {
+        if (!res.ok) {
+          if (typeof document !== 'undefined') {
+            document.cookie =
+              'nae_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+            document.cookie =
+              'nae_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+          }
+          return null;
+        }
+        return res.json();
+      })
+      .then((json) => {
+        if (!isMounted) return;
+        if (json?.success && json?.data?.user) {
+          setUser(json.data.user);
+        } else {
+          setUser(null);
+        }
+      })
+      .catch(() => {
+        if (isMounted) setUser(null);
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Route protection redirect for unauthenticated users
   useEffect(() => {
@@ -91,10 +123,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
+      if (typeof document !== 'undefined') {
+        document.cookie =
+          'nae_session_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+        document.cookie =
+          'nae_user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+      }
       await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (err) {
+      console.warn('Logout network notice:', err);
     } finally {
       setUser(null);
-      router.push('/login');
+      if (typeof window !== 'undefined') {
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+        window.location.href = '/login?logged_out=1';
+      } else {
+        router.push('/login?logged_out=1');
+      }
     }
   };
 
@@ -119,6 +164,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         login,
         logout,
+        refreshUser,
         hasPermission,
         hasRole,
       }}

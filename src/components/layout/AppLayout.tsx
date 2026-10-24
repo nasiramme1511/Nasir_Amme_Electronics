@@ -17,7 +17,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
   // Clean full-screen presentation for the login page
   if (pathname === '/login') {
     return (
-      <div className="min-h-screen bg-[#0F172A] text-slate-100 flex flex-col justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-[#0B111E] text-slate-900 dark:text-slate-100 flex flex-col justify-center transition-colors duration-200">
         {children}
         <ToastContainer />
       </div>
@@ -25,7 +25,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
   }
 
   return (
-    <div className="min-h-screen bg-[#F4F6FA] text-slate-900 flex flex-col">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0B111E] text-slate-900 dark:text-slate-100 flex flex-col transition-colors duration-200">
       {/* Sidebar for Desktop */}
       <Sidebar />
 
@@ -47,13 +47,13 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
         </div>
 
         {/* Global Footer */}
-        <footer className="py-4 px-6 border-t border-slate-200/80 bg-white/60 text-center text-xs text-slate-500">
+        <footer className="py-4 px-6 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-center text-xs text-slate-500 dark:text-slate-400 transition-colors duration-200">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-2 max-w-7xl mx-auto">
-            <span className="font-medium text-slate-700">
-              Nasir Amme Electronics • Retail Management Platform
+            <span className="font-medium text-slate-700 dark:text-slate-300">
+              © 2026 Nasir Amme Electronics. All rights reserved.
             </span>
-            <span>
-              Dire Dawa, Kebele 02 (Near B-Capital Hotel), Ethiopia • Currency: ETB (Demonstration Environment)
+            <span className="text-[11px] text-slate-500 dark:text-slate-400">
+              Enterprise Retail Inventory & POS System
             </span>
           </div>
         </footer>

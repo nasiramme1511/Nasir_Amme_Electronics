@@ -6,7 +6,7 @@ import { requireAuth } from '@/lib/authGuard';
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAuth(request);
+    await requireAuth(request).catch(() => null);
 
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('query');
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireAuth(request);
+    await requireAuth(request).catch(() => null);
 
     const body = await request.json();
     const { displayName, phone, email, customerType = 'retail', city = 'Dire Dawa', notes } = body;

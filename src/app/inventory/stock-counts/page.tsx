@@ -9,7 +9,6 @@ import {
   RotateCcw,
   Boxes,
   FileCheck,
-  Info,
   DollarSign,
   TrendingUp,
 } from 'lucide-react';
@@ -176,15 +175,15 @@ export default function StockCountsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
               Stock Counts & Audit Tool
             </h1>
             <Badge variant="accent" size="sm">
               Cycle Count
             </Badge>
           </div>
-          <p className="text-sm text-slate-500 mt-1">
-            Conduct physical retail inventory audits and post verified stock reconciliation adjustments in Dire Dawa.
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Physical inventory counts and stock variance reconciliation.
           </p>
         </div>
 
@@ -215,14 +214,14 @@ export default function StockCountsPage() {
         <Card className="p-4 border-l-4 border-l-[#D9A441]">
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-xs text-slate-500 font-semibold uppercase">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">
                 Items with Variance
               </span>
-              <div className="text-xl font-bold text-slate-900 mt-1">
+              <div className="text-xl font-bold text-slate-900 dark:text-white mt-1">
                 {discrepancies.totalDiscrepantItems} Product(s)
               </div>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center">
               <AlertTriangle className="w-5 h-5" />
             </div>
           </div>
@@ -231,15 +230,15 @@ export default function StockCountsPage() {
         <Card className="p-4 border-l-4 border-l-emerald-500">
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-xs text-slate-500 font-semibold uppercase">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">
                 Found Excess Stock
               </span>
-              <div className="text-xl font-bold text-emerald-700 mt-1 flex items-center gap-1">
+              <div className="text-xl font-bold text-emerald-700 dark:text-emerald-400 mt-1 flex items-center gap-1">
                 <TrendingUp className="w-4 h-4" />
                 +{discrepancies.totalPositiveUnits} Units
               </div>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
               <Boxes className="w-5 h-5" />
             </div>
           </div>
@@ -248,34 +247,26 @@ export default function StockCountsPage() {
         <Card className="p-4 border-l-4 border-l-rose-500">
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-xs text-slate-500 font-semibold uppercase">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">
                 Net Variance Valuation
               </span>
               <div
                 className={`text-xl font-bold mt-1 ${
                   discrepancies.netVarianceCostETB < 0
-                    ? 'text-rose-600'
+                    ? 'text-rose-600 dark:text-rose-400'
                     : discrepancies.netVarianceCostETB > 0
-                    ? 'text-emerald-700'
-                    : 'text-slate-900'
+                    ? 'text-emerald-700 dark:text-emerald-400'
+                    : 'text-slate-900 dark:text-white'
                 }`}
               >
                 {formatETB(discrepancies.netVarianceCostETB)}
               </div>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center">
               <DollarSign className="w-5 h-5" />
             </div>
           </div>
         </Card>
-      </div>
-
-      {/* Audit Guide */}
-      <div className="bg-blue-50/70 border border-blue-200/80 rounded-xl p-4 flex items-start gap-3 text-xs text-blue-900">
-        <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-        <div className="leading-relaxed">
-          <strong>Physical Stock Count Instructions:</strong> Enter the actual on-shelf unit counts observed in store bins and display cabinets. Differences are highlighted automatically in real-time. Click <strong>&quot;Review Adjustments&quot;</strong> to preview the accounting and inventory changes before updating live stock levels.
-        </div>
       </div>
 
       {/* Filter and Search Bar */}
@@ -288,7 +279,7 @@ export default function StockCountsPage() {
               placeholder="Search items by title or SKU..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#D9A441] bg-slate-50/50"
+              className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-[#D9A441] bg-slate-50/50 dark:bg-slate-900/60 dark:text-white"
             />
           </div>
 
@@ -296,11 +287,11 @@ export default function StockCountsPage() {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="text-xs px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#D9A441]"
+              className="text-xs px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#D9A441]"
             >
-              <option value="all">All Categories</option>
+              <option value="all" className="dark:bg-slate-900">All Categories</option>
               {categories.map((c) => (
-                <option key={c} value={c}>
+                <option key={c} value={c} className="dark:bg-slate-900">
                   {c}
                 </option>
               ))}
@@ -313,7 +304,7 @@ export default function StockCountsPage() {
       <Card>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50/80 text-slate-600 text-xs font-semibold border-b border-slate-200">
+            <thead className="bg-slate-50/80 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 text-xs font-semibold border-b border-slate-200 dark:border-slate-800">
               <tr>
                 <th className="py-3 px-4">Item & SKU</th>
                 <th className="py-3 px-4">Category</th>
@@ -324,7 +315,7 @@ export default function StockCountsPage() {
                 <th className="py-3 px-4 text-center">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {countRows.map((row) => {
                 const counted = row.countedStock === '' ? row.systemStock : row.countedStock;
                 const diff = counted - row.systemStock;
@@ -335,21 +326,21 @@ export default function StockCountsPage() {
                   <tr
                     key={row.productId}
                     className={`transition-colors ${
-                      hasVariance ? 'bg-amber-50/40 hover:bg-amber-50/60' : 'hover:bg-slate-50/70'
+                      hasVariance ? 'bg-amber-50/40 dark:bg-amber-950/30 hover:bg-amber-50/60 dark:hover:bg-amber-950/40' : 'hover:bg-slate-50/70 dark:hover:bg-slate-800/40'
                     }`}
                   >
                     <td className="py-3 px-4">
-                      <div className="font-semibold text-slate-900 text-xs line-clamp-1 max-w-xs">
+                      <div className="font-semibold text-slate-900 dark:text-white text-xs line-clamp-1 max-w-xs">
                         {row.name}
                       </div>
                       <div className="font-mono text-[11px] text-slate-400">{row.sku}</div>
                     </td>
 
-                    <td className="py-3 px-4 text-xs text-slate-600 truncate max-w-[140px]">
+                    <td className="py-3 px-4 text-xs text-slate-600 dark:text-slate-400 truncate max-w-[140px]">
                       {row.category}
                     </td>
 
-                    <td className="py-3 px-4 text-center font-bold text-slate-700">
+                    <td className="py-3 px-4 text-center font-bold text-slate-700 dark:text-slate-200">
                       {row.systemStock} pcs
                     </td>
 
@@ -362,8 +353,8 @@ export default function StockCountsPage() {
                         onChange={(e) => handleCountChange(row.productId, e.target.value)}
                         className={`w-24 text-center px-2 py-1.5 rounded-lg border font-bold text-sm focus:outline-none focus:ring-2 focus:ring-[#D9A441] ${
                           hasVariance
-                            ? 'border-amber-400 bg-amber-50 text-amber-900'
-                            : 'border-slate-300 bg-white text-slate-900'
+                            ? 'border-amber-400 dark:border-amber-600 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200'
+                            : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white'
                         }`}
                       />
                     </td>
@@ -374,14 +365,14 @@ export default function StockCountsPage() {
                         <span
                           className={`font-bold text-xs px-2 py-0.5 rounded-full ${
                             diff > 0
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : 'bg-rose-100 text-rose-800'
+                              ? 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300'
+                              : 'bg-rose-100 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300'
                           }`}
                         >
                           {diff > 0 ? `+${diff}` : diff} pcs
                         </span>
                       ) : (
-                        <span className="text-slate-400 text-xs">Match (0)</span>
+                        <span className="text-slate-400 dark:text-slate-500 text-xs">Match (0)</span>
                       )}
                     </td>
 
@@ -390,13 +381,13 @@ export default function StockCountsPage() {
                       {hasVariance ? (
                         <span
                           className={`font-bold text-xs ${
-                            valueDiff > 0 ? 'text-emerald-700' : 'text-rose-700'
+                            valueDiff > 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'
                           }`}
                         >
                           {valueDiff > 0 ? `+${formatETB(valueDiff)}` : formatETB(valueDiff)}
                         </span>
                       ) : (
-                        <span className="text-slate-400 text-xs">0.00 ETB</span>
+                        <span className="text-slate-400 dark:text-slate-500 text-xs">0.00 ETB</span>
                       )}
                     </td>
 
@@ -428,7 +419,7 @@ export default function StockCountsPage() {
         description="Review proposed physical count debits and credits before committing to active inventory."
         footer={
           <div className="flex items-center justify-between w-full">
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-slate-500 dark:text-slate-400">
               Net Impact: <strong>{formatETB(discrepancies.netVarianceCostETB)}</strong>
             </span>
             <div className="flex items-center gap-2">
@@ -454,38 +445,38 @@ export default function StockCountsPage() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
                 Audit / Adjustment Reason *
               </label>
               <select
                 value={adjustmentReason}
                 onChange={(e) => setAdjustmentReason(e.target.value)}
-                className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#D9A441]"
+                className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#D9A441]"
               >
-                <option value="Quarterly Physical Cycle Count">Quarterly Physical Cycle Count</option>
-                <option value="Damaged in Display Showcase">Damaged in Display Showcase</option>
-                <option value="Counting Error Correction">Counting Error Correction</option>
-                <option value="Unrecorded Retail Shrinkage">Unrecorded Retail Shrinkage</option>
-                <option value="Supplier Package Miscount">Supplier Package Miscount</option>
+                <option value="Quarterly Physical Cycle Count" className="dark:bg-slate-900">Quarterly Physical Cycle Count</option>
+                <option value="Damaged in Display Showcase" className="dark:bg-slate-900">Damaged in Display Showcase</option>
+                <option value="Counting Error Correction" className="dark:bg-slate-900">Counting Error Correction</option>
+                <option value="Unrecorded Retail Shrinkage" className="dark:bg-slate-900">Unrecorded Retail Shrinkage</option>
+                <option value="Supplier Package Miscount" className="dark:bg-slate-900">Supplier Package Miscount</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
                 Auditing Officer
               </label>
               <input
                 type="text"
                 value={auditorName}
                 onChange={(e) => setAuditorName(e.target.value)}
-                className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#D9A441]"
+                className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#D9A441]"
               />
             </div>
           </div>
 
-          <div className="border border-slate-200 rounded-xl overflow-hidden">
+          <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
+              <thead className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold border-b border-slate-200 dark:border-slate-800">
                 <tr>
                   <th className="py-2 px-3">Product Name</th>
                   <th className="py-2 px-3 text-center">System</th>
@@ -494,23 +485,23 @@ export default function StockCountsPage() {
                   <th className="py-2 px-3 text-right">Valuation Impact</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {discrepancies.items.map((item) => (
-                  <tr key={item.productId} className="hover:bg-slate-50">
+                  <tr key={item.productId} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
                     <td className="py-2 px-3">
-                      <div className="font-semibold text-slate-900">{item.name}</div>
-                      <div className="text-[10px] text-slate-400 font-mono">{item.sku}</div>
+                      <div className="font-semibold text-slate-900 dark:text-white">{item.name}</div>
+                      <div className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">{item.sku}</div>
                     </td>
-                    <td className="py-2 px-3 text-center text-slate-600">
+                    <td className="py-2 px-3 text-center text-slate-600 dark:text-slate-400">
                       {item.systemStock} pcs
                     </td>
-                    <td className="py-2 px-3 text-center font-bold text-slate-900">
+                    <td className="py-2 px-3 text-center font-bold text-slate-900 dark:text-white">
                       {item.countedStock} pcs
                     </td>
                     <td className="py-2 px-3 text-center font-bold">
                       <span
                         className={
-                          item.varianceUnits > 0 ? 'text-emerald-700' : 'text-rose-700'
+                          item.varianceUnits > 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'
                         }
                       >
                         {item.varianceUnits > 0
@@ -521,7 +512,7 @@ export default function StockCountsPage() {
                     </td>
                     <td
                       className={`py-2 px-3 text-right font-bold ${
-                        item.varianceCostETB > 0 ? 'text-emerald-700' : 'text-rose-700'
+                        item.varianceCostETB > 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'
                       }`}
                     >
                       {item.varianceCostETB > 0
@@ -534,7 +525,7 @@ export default function StockCountsPage() {
             </table>
           </div>
 
-          <p className="text-[11px] text-slate-500 leading-relaxed">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
             * Committing will adjust product inventory records and generate corresponding stock movement ledger entries for Nasir Amme Electronics audit compliance.
           </p>
         </div>

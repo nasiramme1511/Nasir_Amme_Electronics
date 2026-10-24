@@ -18,6 +18,7 @@ export interface FinancialSummaryReport {
   };
   profitabilityMetrics: {
     totalCogsETB: number;
+    returnedCogsAdjustedETB?: number;
     grossProfitETB: number;
     grossMarginPercentage: number;
   };
@@ -76,7 +77,7 @@ export class ReportService {
       }
     }
 
-    const netSales = grossSales.sub(discountsTotal).add(taxesTotal);
+    const netSales = grossSales.sub(discountsTotal);
 
     // 2. Fetch returns within period
     const returnsFilter: Prisma.SaleReturnWhereInput = {
@@ -94,24 +95,42 @@ export class ReportService {
 
     const returns = await prisma.saleReturn.findMany({
       where: returnsFilter,
+      include: {
+        items: {
+          include: {
+            saleItem: true,
+          },
+        },
+      },
     });
 
     let returnsRefunded = new Prisma.Decimal(0);
+    let returnedRestockedCogs = new Prisma.Decimal(0);
+
     for (const ret of returns) {
       returnsRefunded = returnsRefunded.add(ret.totalRefundETB);
+      for (const retItem of ret.items) {
+        if (retItem.disposition === 'restock' && retItem.saleItem) {
+          const itemCogs = retItem.saleItem.unitCostSnapshot.mul(retItem.quantity);
+          returnedRestockedCogs = returnedRestockedCogs.add(itemCogs);
+        }
+      }
     }
 
     const netRevenue = netSales.sub(returnsRefunded);
-    const grossProfit = netSales.sub(totalCogs);
-    const grossMarginPct = netSales.gt(0)
-      ? grossProfit.div(netSales).mul(100).toNumber()
+    const adjustedCogs = totalCogs.sub(returnedRestockedCogs);
+    const grossProfit = netRevenue.sub(adjustedCogs);
+    const grossMarginPct = netRevenue.gt(0)
+      ? grossProfit.div(netRevenue).mul(100).toNumber()
       : 0;
 
-    // 3. Current Inventory Valuation
+    // 3. Current Inventory Valuation (Live Active SKUs)
     const products = await prisma.product.findMany({
       where: {
         shopId,
         status: 'active',
+        deletedAt: null,
+        isArchived: false,
       },
     });
 
@@ -146,7 +165,8 @@ export class ReportService {
         totalReturnsProcessed: returns.length,
       },
       profitabilityMetrics: {
-        totalCogsETB: totalCogs.toDecimalPlaces(2).toNumber(),
+        totalCogsETB: adjustedCogs.toDecimalPlaces(2).toNumber(),
+        returnedCogsAdjustedETB: returnedRestockedCogs.toDecimalPlaces(2).toNumber(),
         grossProfitETB: grossProfit.toDecimalPlaces(2).toNumber(),
         grossMarginPercentage: Math.round(grossMarginPct * 100) / 100,
       },
